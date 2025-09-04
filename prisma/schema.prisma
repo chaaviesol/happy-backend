@@ -1,0 +1,713 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model brand {
+  brand_id         Int              @id @default(autoincrement())
+  brand_name       String?          @unique(map: "brand_name_unique") @db.VarChar
+  supplier_id      String?          @db.VarChar
+  product_type     String?          @db.VarChar
+  created_by       String?          @default(dbgenerated("now()")) @db.VarChar
+  created_date     DateTime?        @db.Timestamp(6)
+  updated_by       String?          @db.VarChar
+  updated_date     DateTime?        @db.Timestamp(6)
+  product_sub_type Json?            @db.Json
+  brand_code       String?          @db.VarChar(4)
+  product_master   product_master[]
+}
+
+model category_master_new {
+  id        Int     @id @default(autoincrement())
+  main_type String? @db.VarChar
+  category  String? @db.VarChar
+  spec      Json?   @db.Json
+}
+
+model goods_receipt {
+  goods_id                                                    Int             @id(map: "GOODS_RECEIPT_pkey") @default(autoincrement())
+  product_id                                                  Int?
+  margin                                                      String?         @db.VarChar
+  base_price                                                  Decimal?        @db.Decimal
+  charges                                                     Json?           @db.Json
+  mrp                                                         Decimal?        @db.Decimal
+  batch_num                                                   String?         @db.VarChar
+  selling_price                                               Decimal?        @db.Decimal
+  created_by                                                  String?         @db.VarChar
+  created_date                                                DateTime?       @db.Timestamp(6)
+  updated_by                                                  String?         @db.VarChar
+  updated_date                                                DateTime?       @db.Timestamp(6)
+  purchase_order                                              String?         @db.VarChar
+  sales_order                                                 String?         @db.VarChar
+  lr_num                                                      String?         @db.VarChar
+  product_master                                              product_master? @relation(fields: [product_id], references: [product_id], onDelete: NoAction, onUpdate: NoAction)
+  purchase_order_goods_receipt_purchase_orderTopurchase_order purchase_order? @relation("goods_receipt_purchase_orderTopurchase_order", fields: [purchase_order], references: [po_number], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model inventory {
+  INVENTORY_id     Int             @id(map: "INVENTORY_pkey") @default(autoincrement())
+  prod_id          Int?
+  batch_id         String?         @db.VarChar
+  total_quantity   Int?
+  blocked_quantity Int?
+  created_by       String?         @db.VarChar
+  created_date     DateTime?       @db.Timestamp(6)
+  updated_by       String?         @db.VarChar
+  updated_date     DateTime?       @db.Timestamp(6)
+  po_num           String?         @db.VarChar
+  mrp              Int?
+  base_price       Int?
+  selling_price    Int?
+  charges          Json?           @db.Json
+  barcode          String?   // S3 URL to barcode image
+  barcode_text     String?   // Actual encoded text, for lookup
+  product_master   product_master? @relation(fields: [prod_id], references: [product_id], onDelete: NoAction, onUpdate: NoAction, map: "product")
+}
+
+model logistics_master {
+  logistics_id      Int                 @id @default(autoincrement())
+  logistics_name    String?             @db.VarChar
+  logistics_address String?             @db.VarChar
+  created_by        String?             @db.VarChar
+  created_date      DateTime?           @db.Timestamp(6)
+  updated_by        String?             @db.VarChar
+  updated_date      DateTime?           @db.Timestamp(6)
+  active            String?             @db.VarChar(1)
+  bl_purchase_order bl_purchase_order[]
+  purchase_order    purchase_order[]
+}
+
+model payment_details {
+  payment_id      Int?
+  purchase_id     Int?
+  mode_of_payment String?   @db.VarChar
+  amount          Decimal?  @db.Decimal
+  created_by      String?   @db.VarChar
+  created_date    DateTime? @db.Timestamp(6)
+  updated_by      String?   @db.VarChar
+  updated_date    DateTime? @db.Timestamp(6)
+
+  @@ignore
+}
+
+model product_master {
+  product_id                                                                      Int                      @id(map: "PRODUCT_MASTER_pkey") @default(autoincrement())
+  product_code                                                                    String?                  @unique(map: "product_code_unique") @db.VarChar
+  product_name                                                                    String?                  @db.VarChar
+  product_desc                                                                    String?                  @db.VarChar
+  product_type                                                                    String?                  @db.VarChar
+  product_sub_type                                                                String?                  @db.VarChar
+  hsn                                                                             String?                  @db.VarChar
+  supplier_id                                                                     Int?
+  brand_id                                                                        Int?
+  product_spec                                                                    Json?                    @db.Json
+  package                                                                         String?                  @db.VarChar
+  no_of_items                                                                     Int?
+  manufacturer_code                                                               String?                  @db.VarChar
+  gst_perc                                                                        Decimal?                 @db.Decimal
+  created_by                                                                      String?                  @db.VarChar
+  created_date                                                                    DateTime?                @db.Timestamp(6)
+  is_active                                                                       String?                  @db.Char(1)
+  unit_of_measure                                                                 String?                  @db.VarChar
+  parent_product_id                                                               Int?
+  updated_by                                                                      String?                  @db.VarChar
+  updated_date                                                                    DateTime?                @db.Timestamp(6)
+  image1_link                                                                     String?                  @db.VarChar
+  image2_link                                                                     String?                  @db.VarChar
+  image3_link                                                                     String?                  @db.VarChar
+  color                                                                           String?                  @db.VarChar
+  color_family                                                                    String?                  @db.VarChar
+  search_field                                                                    Unsupported("tsvector")?
+  prod_subtype2                                                                   String?                  @db.VarChar
+  images                                                                          Json?                    @db.Json
+  min_stk                                                                         Int?
+  bl_goods_receipt                                                                bl_goods_receipt[]
+  bl_inventory                                                                    bl_inventory[]
+  bl_purchase_list                                                                bl_purchase_list[]
+  customer_cart                                                                   customer_cart[]
+  customer_wish_list                                                              customer_wish_list[]
+  goods_receipt                                                                   goods_receipt[]
+  inventory                                                                       inventory[]
+  product_master                                                                  product_master?          @relation("product_masterToproduct_master", fields: [parent_product_id], references: [product_id], onDelete: NoAction, onUpdate: NoAction, map: "PRODUCT_MASTER_parent_product_id_fkey")
+  other_product_master                                                            product_master[]         @relation("product_masterToproduct_master")
+  brand                                                                           brand?                   @relation(fields: [brand_id], references: [brand_id], onDelete: NoAction, onUpdate: NoAction)
+  users                                                                           users?                   @relation(fields: [supplier_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  purchase_list                                                                   purchase_list[]
+  sales_list                                                                      sales_list[]
+  sales_list_accessories_sales_list_accessories_parent_product_idToproduct_master sales_list_accessories[] @relation("sales_list_accessories_parent_product_idToproduct_master")
+  sales_list_accessories_sales_list_accessories_product_idToproduct_master        sales_list_accessories[] @relation("sales_list_accessories_product_idToproduct_master")
+  scrap_inventory                                                                 scrap_inventory[]
+}
+
+model product_temp {
+  product_id        Int       @id(map: "PRODUCT_Temp_pkey") @default(autoincrement())
+  product_code      String?   @db.VarChar
+  product_name      String?   @db.VarChar
+  product_desc      String?   @db.VarChar
+  product_type      String?   @db.VarChar
+  product_sub_type  String?   @db.VarChar
+  manufacturer_code String?   @db.VarChar
+  created_by        String?   @db.VarChar
+  created_date      DateTime? @db.Timestamp(6)
+  updated_by        String?   @db.VarChar
+  updated_date      DateTime? @db.Timestamp(6)
+}
+
+model purchase_order {
+  purchase_id                                                Int               @id @default(autoincrement())
+  po_number                                                  String?           @unique(map: "po_num_unique") @db.VarChar
+  total_amount                                               Decimal?          @db.Decimal
+  quote_document_link1                                       String?           @db.VarChar
+  po_status                                                  String?           @db.VarChar
+  remarks                                                    String?           @db.VarChar
+  delivery_date                                              DateTime?         @db.Timestamp(6)
+  created_by                                                 String?           @db.VarChar
+  created_date                                               DateTime?         @db.Timestamp(6)
+  updated_by                                                 String?           @db.VarChar
+  updated_date                                               DateTime?         @db.Timestamp(6)
+  supplier_id                                                String?           @db.VarChar
+  logistics_id                                               Int?
+  po_notes                                                   Json?             @db.Json
+  goods_receipt_goods_receipt_purchase_orderTopurchase_order goods_receipt[]   @relation("goods_receipt_purchase_orderTopurchase_order")
+  po_payment                                                 po_payment[]
+  logistics_master                                           logistics_master? @relation(fields: [logistics_id], references: [logistics_id], onDelete: NoAction, onUpdate: NoAction)
+  users                                                      users?            @relation(fields: [supplier_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model users {
+  id                 Int                      @id
+  user_id            String?                  @unique(map: "unique user id") @db.VarChar
+  user_name          String?                  @unique(map: "unique name for each user") @db.VarChar
+  password           String?                  @db.VarChar
+  email              String?                  @db.VarChar
+  yearsinbusiness    Int?
+  mobile             String?                  @db.VarChar
+  landline           String?                  @db.VarChar
+  website            String?                  @db.VarChar
+  address            Json?                    @db.Json
+  created_date       DateTime?                @db.Timestamp(6)
+  last_accessed_date DateTime?                @db.Timestamp(6)
+  updated_date       DateTime?                @db.Timestamp(6)
+  product_type       Json?                    @db.Json
+  is_approved        String?                  @db.Char(1)
+  is_active          String?                  @db.Char(1)
+  approved_by        Int?
+  user_type          String?                  @db.VarChar
+  gst_num            String?                  @db.VarChar
+  is_user_flagged    String?                  @db.Char(1)
+  flagged_remarks    String?                  @db.VarChar
+  trade_name         String?                  @db.VarChar
+  search_user        Unsupported("tsvector")?
+  sup_code           String?                  @db.VarChar
+  temp_otp           String?                  @db.VarChar
+  trade_option       String?                  @db.VarChar
+  adm_notification   adm_notification[]
+  bank__details      bank__details[]
+  bl_purchase_order  bl_purchase_order[]
+  cus_notification   cus_notification[]
+  leave_balance      leave_balance[]
+  login_timestamp    login_timestamp[]
+  product_master     product_master[]
+  purchase_order     purchase_order[]
+  return_request     return_request[]
+  sales_order_new    sales_order_new[]
+  service_request    service_request[]
+  staff_attendence   staff_attendence[]
+  staff_claims       staff_claims[]
+  staff_leave        staff_leave[]
+  transaction        transaction[]
+  user_feeback       user_feeback[]
+}
+
+model user_feeback {
+  id            Int       @id @default(autoincrement())
+  user_id       Int?
+  feedback_text String?   @db.VarChar
+  created_by    Int?
+  created_date  DateTime? @default(now()) @db.Timestamp(6)
+  old_status    String?   @db.VarChar
+  new_status    String?   @db.VarChar
+  users         users?    @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "userid")
+}
+
+model gr_product_list {
+  id               Int       @id @default(autoincrement())
+  gr_id            Int?
+  product_id       Int?
+  received_qty     Int?
+  base_price       Int?
+  landing_price    Int?
+  max_retail_price Int?
+  created_by       String?   @db.VarChar
+  created_on       DateTime? @db.Timestamp(6)
+}
+
+model customer_cart {
+  id             Int            @id @default(autoincrement())
+  customer_id    Int
+  product_id     Int
+  quantity       Int
+  product_master product_master @relation(fields: [product_id], references: [product_id], onDelete: NoAction, onUpdate: NoAction, map: "productid")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model customer_quote {
+  quote_id     Int       @id @default(autoincrement())
+  customer_id  Int?
+  product_id   Json?     @db.Json
+  quantity     Int?
+  status       String?   @db.VarChar
+  total_price  Decimal?  @db.Decimal
+  rtq_price    Json?     @db.Json
+  quoted_price Json?     @db.Json
+  created_by   String?   @db.VarChar
+  created_date DateTime? @db.Timestamp(6)
+  updated_by   String?   @db.VarChar
+  updated_date DateTime? @db.Timestamp(6)
+}
+
+model customer_wish_list {
+  id             Int            @id @default(autoincrement())
+  customer_id    Int
+  prod_id        Int
+  product_master product_master @relation(fields: [prod_id], references: [product_id], onDelete: NoAction, onUpdate: NoAction, map: "productidd")
+}
+
+model purchase_list {
+  id             Int             @id @default(autoincrement())
+  po_num         String?         @db.VarChar
+  product_id     Int?
+  order_qty      Int?
+  received_qty   Int?
+  unit_price     Int?
+  created_by     String?         @db.VarChar
+  created_date   DateTime?       @db.Timestamp(6)
+  modified_by    String?         @db.VarChar
+  modified_date  DateTime?       @db.Timestamp(6)
+  pricing_unit   String?         @db.VarChar
+  product_master product_master? @relation(fields: [product_id], references: [product_id], onDelete: NoAction, onUpdate: NoAction, map: "productname")
+}
+
+model bank__details {
+  id             Int     @id @default(autoincrement())
+  user_id        String? @db.VarChar
+  account_type   String? @db.VarChar
+  account_number String? @db.VarChar
+  ifsc_code      String? @db.VarChar
+  users          users?  @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "userid")
+}
+
+model staff_users {
+  id              Int               @id @default(autoincrement())
+  user_id         String?           @db.VarChar
+  division        String?           @db.VarChar
+  department      String?           @db.VarChar
+  completed_tasks completed_tasks[]
+}
+
+model sales_list {
+  id              Int               @id @default(autoincrement())
+  so_number       Int?
+  product_id      Int?
+  order_qty       Int?
+  sales_price     Int?
+  created_by      String?           @db.VarChar
+  created_date    DateTime?         @db.Timestamp(6)
+  modified_by     String?           @db.VarChar
+  modified_date   DateTime?         @db.Timestamp(6)
+  fitting_charge  Int?
+  delivery_type   String?           @db.VarChar
+  discount        Int?
+  net_amount      Decimal?          @db.Decimal
+  batch           Json?             @db.Json
+  couponCode      String?           @db.VarChar
+  return_request  return_request[]
+  campaigns       campaigns?        @relation(fields: [couponCode], references: [coupon_code], onDelete: NoAction, onUpdate: NoAction, map: "coupon_applied")
+  product_master  product_master?   @relation(fields: [product_id], references: [product_id], onDelete: NoAction, onUpdate: NoAction, map: "product_id")
+  sales_order_new sales_order_new?  @relation(fields: [so_number], references: [sales_id], onDelete: NoAction, onUpdate: NoAction, map: "so_number")
+  service_request service_request[]
+}
+
+model sales_order_new {
+  sales_id               Int                      @id @default(autoincrement())
+  so_number              String?                  @unique(map: "so_number") @db.VarChar
+  total_amount           Decimal?                 @db.Decimal
+  quote_document_link1   String?                  @db.VarChar
+  so_status              String?                  @db.VarChar
+  remarks                String?                  @db.VarChar
+  delivery_date          DateTime?                @db.Timestamp(6)
+  created_by             String?                  @db.VarChar
+  created_date           DateTime?                @db.Timestamp(6)
+  updated_by             String?                  @db.VarChar
+  updated_date           DateTime?                @db.Timestamp(6)
+  so_notes               Json?                    @db.Json
+  customer_id            Int?
+  discount               Int?
+  ispayment_completed    String?                  @db.VarChar(1)
+  roundoff_disc          Decimal?                 @db.Decimal
+  sales_list             sales_list[]
+  sales_list_accessories sales_list_accessories[]
+  users                  users?                   @relation(fields: [customer_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "customer_id")
+  so_payment             so_payment[]
+  transaction            transaction[]
+}
+
+model sales_list_accessories {
+  id                                                                      Int              @id @default(autoincrement())
+  so_number                                                               Int?
+  parent_product_id                                                       Int?
+  product_id                                                              Int?
+  order_qty                                                               Int?
+  sales_price                                                             Int?
+  created_by                                                              String?          @db.VarChar
+  created_date                                                            DateTime?        @db.Timestamp(6)
+  modified_by                                                             String?          @db.VarChar
+  modified_date                                                           DateTime?        @db.Timestamp(6)
+  net_amt                                                                 Decimal?         @db.Decimal
+  discount                                                                Int?
+  product_master_sales_list_accessories_parent_product_idToproduct_master product_master?  @relation("sales_list_accessories_parent_product_idToproduct_master", fields: [parent_product_id], references: [product_id], onDelete: NoAction, onUpdate: NoAction, map: "parent_prod_id")
+  product_master_sales_list_accessories_product_idToproduct_master        product_master?  @relation("sales_list_accessories_product_idToproduct_master", fields: [product_id], references: [product_id], onDelete: NoAction, onUpdate: NoAction, map: "prod_id")
+  sales_order_new                                                         sales_order_new? @relation(fields: [so_number], references: [sales_id], onDelete: NoAction, onUpdate: NoAction, map: "so_num")
+}
+
+model bl_purchase_list {
+  id             Int             @id @default(autoincrement())
+  po_num         String?         @db.VarChar
+  product_id     Int?
+  order_qty      Int?
+  received_qty   Int?
+  unit_price     Int?
+  created_by     String?         @db.VarChar
+  created_date   DateTime?       @db.Timestamp(6)
+  modified_by    String?         @db.VarChar
+  modified_date  DateTime?       @db.Timestamp(6)
+  product_master product_master? @relation(fields: [product_id], references: [product_id], onDelete: NoAction, onUpdate: NoAction, map: "productname")
+}
+
+model bl_purchase_order {
+  purchase_id          Int                @id @default(autoincrement())
+  po_number            String?            @unique(map: "bl_po_num_unique") @db.VarChar
+  total_amount         Decimal?           @db.Decimal
+  quote_document_link1 String?            @db.VarChar
+  po_status            String?            @db.VarChar
+  remarks              String?            @db.VarChar
+  delivery_date        DateTime?          @db.Timestamp(6)
+  created_by           String?            @db.VarChar
+  created_date         DateTime?          @db.Timestamp(6)
+  updated_by           String?            @db.VarChar
+  updated_date         DateTime?          @db.Timestamp(6)
+  supplier_id          String?            @db.VarChar
+  logistics_id         Int?
+  po_notes             Json?              @db.Json
+  products             Json[]             @db.Json
+  lr_number            String?            @db.VarChar
+  bl_goods_receipt     bl_goods_receipt[]
+  logistics_master     logistics_master?  @relation(fields: [logistics_id], references: [logistics_id], onDelete: NoAction, onUpdate: NoAction, map: "purchase_order_logistics_id_fkey")
+  users                users?             @relation(fields: [supplier_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "purchase_order_supplier_id_fkey")
+}
+
+model bl_goods_receipt {
+  goods_id          Int                @id(map: "bl_GOODS_RECEIPT_pkey") @default(autoincrement())
+  product_id        Int?
+  margin            String?            @db.VarChar
+  base_price        Decimal?           @db.Decimal
+  charges           Json?              @db.Json
+  mrp               Decimal?           @db.Decimal
+  batch_num         String?            @db.VarChar
+  selling_price     Decimal?           @db.Decimal
+  created_by        String?            @db.VarChar
+  created_date      DateTime?          @db.Timestamp(6)
+  updated_by        String?            @db.VarChar
+  updated_date      DateTime?          @db.Timestamp(6)
+  purchase_order    String?            @db.VarChar
+  sales_order       String?            @db.VarChar
+  lr_num            String?            @db.VarChar
+  product_master    product_master?    @relation(fields: [product_id], references: [product_id], onDelete: NoAction, onUpdate: NoAction, map: "goods_receipt_product_id_fkey")
+  bl_purchase_order bl_purchase_order? @relation(fields: [purchase_order], references: [po_number], onDelete: NoAction, onUpdate: NoAction, map: "goods_receipt_purchase_order_fkey")
+}
+
+model bl_gr_product_list {
+  id               Int       @id @default(autoincrement())
+  gr_id            Int?
+  product_id       Int?
+  received_qty     Int?
+  base_price       Int?
+  landing_price    Int?
+  max_retail_price Int?
+  created_by       String?   @db.VarChar
+  created_on       DateTime? @db.Timestamp(6)
+}
+
+model bl_inventory {
+  INVENTORY_id     Int             @id(map: "nl_INVENTORY_pkey") @default(autoincrement())
+  prod_id          Int?
+  batch_id         String?         @db.VarChar
+  total_quantity   Int?
+  blocked_quantity Int?
+  created_by       String?         @db.VarChar
+  created_date     DateTime?       @db.Timestamp(6)
+  updated_by       String?         @db.VarChar
+  updated_date     DateTime?       @db.Timestamp(6)
+  po_num           String?         @db.VarChar
+  mrp              Int?
+  base_price       Int?
+  selling_price    Int?
+  charges          Json?           @db.Json
+  product_master   product_master? @relation(fields: [prod_id], references: [product_id], onDelete: NoAction, onUpdate: NoAction, map: "product")
+}
+
+model staff_attendence {
+  id             Int       @id @default(autoincrement())
+  staff_id       Int?
+  check_in       DateTime? @db.Timestamp(6)
+  check_out      DateTime? @db.Timestamp(6)
+  date           String?   @db.VarChar
+  total_interval Float?
+  users          users?    @relation(fields: [staff_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "staff_id")
+}
+
+model staff_claims {
+  id            Int       @id @default(autoincrement())
+  staff_id      Int?
+  claim_type    String?   @db.VarChar
+  claim_amount  Int?
+  claim_status  String?   @db.VarChar
+  created_date  DateTime? @db.Timestamp(6)
+  created_by    Int?
+  modified_date DateTime? @db.Timestamp(6)
+  modified_by   Int?
+  remarks       String?   @db.VarChar
+  users         users?    @relation(fields: [staff_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "staffclaim_id")
+}
+
+model staff_leave {
+  id            Int        @id @default(autoincrement())
+  staff_id      Int?
+  leave_type    String?    @db.VarChar
+  status        String?    @db.VarChar
+  time          DateTime?  @db.Timestamptz(6)
+  created_by    Int?
+  created_date  DateTime[] @db.Time
+  modified_by   Int?
+  modified_date DateTime?  @db.Timestamp(6)
+  remarks       String?    @db.VarChar
+  from_date     String?    @db.VarChar
+  to_date       String?    @db.VarChar
+  users         users?     @relation(fields: [staff_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "staff_leave_id")
+}
+
+model leave_balance {
+  id         Int    @id @default(autoincrement())
+  staff_id   Int?
+  cl_balance Int?
+  sl_balance Int?
+  el_balance Int?
+  users      users? @relation(fields: [staff_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "staff_leave_id")
+}
+
+model staff {
+  id              Int     @default(autoincrement())
+  first_name      String? @db.VarChar
+  middle_name     String? @db.VarChar
+  last_name       String? @db.VarChar
+  gender          String? @db.VarChar
+  date_of_birth   String? @db.VarChar
+  mobile_phone    String? @unique(map: "unique mobile_phone") @db.VarChar
+  company_email   String? @unique(map: "unique email") @db.VarChar
+  start_date      String? @db.VarChar
+  division        String? @db.VarChar
+  department      String? @db.VarChar
+  address_line1   String? @db.VarChar
+  address_line2   String? @db.VarChar
+  city            String? @db.VarChar
+  state           String? @db.VarChar
+  pin_code        Int?
+  notes           String? @db.VarChar
+  bank_ifsc       String? @db.VarChar
+  bank_name       String? @db.VarChar
+  branch_name     String? @db.VarChar
+  name_on_account String? @db.VarChar
+  account_number  String? @db.VarChar
+  father_name     String? @db.VarChar
+  mother_name     String? @db.VarChar
+  marital_status  String? @db.VarChar
+  status          String? @db.VarChar
+  id_proof        Json    @id
+  employer_id     String? @unique(map: "unique employer_id") @db.VarChar
+}
+
+model service_request {
+  id            Int         @id @default(autoincrement())
+  sr_number     String?     @db.VarChar
+  sales_list_id Int?
+  product_qty   Int?
+  photos        Json?       @db.Json
+  remarks       String?     @db.VarChar
+  created_date  DateTime?   @db.Timestamp(6)
+  created_by    Int?
+  sr_status     String?     @db.VarChar
+  sales_list    sales_list? @relation(fields: [sales_list_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "sales_list_id")
+  users         users?      @relation(fields: [created_by], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "user_id")
+}
+
+model po_payment {
+  id             Int             @id @default(autoincrement())
+  payment_id     String?         @db.VarChar
+  amount         Int?
+  purchase_id    Int?
+  mode           String?         @db.VarChar
+  created_by     Int?
+  created_date   DateTime?       @db.Timestamp(6)
+  credited_to    String?         @db.VarChar
+  credited_date  String?         @db.VarChar
+  purchase_order purchase_order? @relation(fields: [purchase_id], references: [purchase_id], onDelete: NoAction, onUpdate: NoAction, map: "purchase_id")
+}
+
+model so_payment {
+  id              Int              @id @default(autoincrement())
+  payment_id      String?          @db.VarChar
+  amount          Int?
+  sales_id        Int?
+  mode            String?          @db.VarChar
+  created_by      Int?
+  created_date    DateTime?        @db.Timestamp(6)
+  received_by     String?          @db.VarChar
+  sales_order_new sales_order_new? @relation(fields: [sales_id], references: [sales_id], onDelete: NoAction, onUpdate: NoAction, map: "sales_id")
+}
+
+model scrap_inventory {
+  scrap_inventory_id Int             @id @default(autoincrement())
+  prod_id            Int?
+  batch_id           String?         @db.VarChar
+  total_quantity     Int?
+  blocked_quantity   Int?
+  created_by         String?         @db.VarChar
+  created_date       DateTime?       @db.Timestamp(6)
+  updated_by         String?         @db.VarChar
+  updated_date       DateTime?       @db.Timestamp(6)
+  po_num             String?         @db.VarChar
+  mrp                Int?
+  base_price         Int?
+  selling_price      Int?
+  charges            Json?           @db.Json
+  product_master     product_master? @relation(fields: [prod_id], references: [product_id], onDelete: NoAction, onUpdate: NoAction, map: "product")
+}
+
+model return_request {
+  id             Int           @id @default(autoincrement())
+  rt_number      String?       @db.VarChar
+  sales_list_id  Int?
+  product_qty    Int?
+  photos         Json?         @db.Json
+  remarks        String?       @db.VarChar
+  created_date   DateTime?     @db.Timestamp(6)
+  created_by     Int?
+  rt_status      String?       @db.VarChar
+  refundable_amt Int?
+  sales_list     sales_list?   @relation(fields: [sales_list_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "sales_list_id")
+  users          users?        @relation(fields: [created_by], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "user_id")
+  transaction    transaction[]
+}
+
+model adm_notification {
+  id              Int       @id @default(autoincrement())
+  text            String?   @db.VarChar
+  sender          Int?
+  read            String?   @db.VarChar(1)
+  type            String?   @db.VarChar
+  created_date    DateTime? @db.Timestamp(6)
+  created_by      Int?
+  modified_by     Int?
+  modified_date   DateTime? @db.Timestamp(6)
+  verification_id String?   @db.VarChar
+  users           users?    @relation(fields: [sender], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "sender")
+}
+
+model cus_notification {
+  id              Int       @id @default(autoincrement())
+  text            String?   @db.VarChar
+  receiver        Int?
+  read            String?   @db.VarChar(1)
+  type            String?   @db.VarChar
+  created_date    DateTime? @db.Timestamp(6)
+  created_by      Int?
+  modified_by     Int?
+  modified_date   DateTime? @db.Timestamp(6)
+  verification_id String?   @db.VarChar
+  users           users?    @relation(fields: [receiver], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "receiver")
+}
+
+model login_timestamp {
+  id           Int       @id @default(autoincrement())
+  user_id      Int?
+  created_date DateTime? @db.Timestamp(6)
+  users        users?    @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "user__id")
+}
+
+model transaction {
+  id              Int              @id(map: "wallet_pkey") @default(autoincrement())
+  customer_id     Int?
+  amount          Int?
+  sales_id        Int?
+  created_by      Int?
+  created_date    DateTime?        @db.Timestamp(6)
+  return_id       Int?
+  users           users?           @relation(fields: [customer_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "cus_id")
+  return_request  return_request?  @relation(fields: [return_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "return_id")
+  sales_order_new sales_order_new? @relation(fields: [sales_id], references: [sales_id], onDelete: NoAction, onUpdate: NoAction, map: "sales_id")
+}
+
+model user_access {
+  id         Int      @id @default(autoincrement())
+  user_type  String?  @db.VarChar
+  division   String?  @db.VarChar
+  department String?  @db.VarChar
+  access     String[]
+}
+
+model completed_tasks {
+  id           Int          @id @default(autoincrement())
+  task_id      Int?
+  staff_id     Int?
+  created_date DateTime?    @db.Timestamp(6)
+  staff_users  staff_users? @relation(fields: [staff_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "staff_id")
+}
+
+model campaigns {
+  id            Int          @id @default(autoincrement())
+  name          String?      @db.VarChar
+  coupon_code   String?      @unique(map: "coupon_code") @db.VarChar
+  product_id    Json?
+  discount_type String?      @db.VarChar
+  discount      Int?
+  start_date    DateTime?    @db.Timestamp(6)
+  end_date      DateTime?    @db.Timestamp(6)
+  image         String?      @db.VarChar
+  status        String?      @db.VarChar(1)
+  created_date  DateTime?    @db.Timestamp(6)
+  created_by    Int?
+  sales_list    sales_list[]
+}
+
+model profit_distribution {
+  id           Int       @id @default(autoincrement())
+  name         String?   @db.VarChar
+  percentage   String?   @db.VarChar
+  created_date DateTime? @db.Timestamp(6)
+  created_by   Int?
+  updated_date DateTime? @db.Timestamp(6)
+  updated_by   Int?
+}
+
+model settleaccount_details {
+  id           Int       @id(map: "account_details_pkey") @default(autoincrement())
+  created_date DateTime? @db.Timestamp(6)
+  created_by   Int?
+  name         String?   @db.VarChar
+  settled_date DateTime? @db.Timestamp(6)
+  amount       Float?
+}
