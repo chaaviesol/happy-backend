@@ -440,11 +440,6 @@ const scanBarcode = async (request, response) => {
         selling_price: true,
         barcode_text: true,
         mrp: true,
-        product_master: {
-          select: {
-            product_name: true,
-          },
-        },
       },
     });
 
@@ -452,19 +447,77 @@ const scanBarcode = async (request, response) => {
       return response.status(404).json({ error: "Product not found" });
     }
 
-    // 2️⃣ Return product details + S3 image URL
+    // 2️⃣ Fetch related product info (like in productsale_list)
+    const [maxMrp, productTypeResult, coupon] = await Promise.all([
+      prisma.inventory.aggregate({
+        _max: { mrp: true },
+        _min: { selling_price: true },
+        where: { prod_id: product.prod_id },
+      }),
+      prisma.product_master.findFirst({
+        where: { product_id: product.prod_id },
+        select: {
+          product_type: true,
+          product_name: true,
+          color_family: true,
+          color:true,
+          package: true,
+          no_of_items: true,
+          gst_perc: true,
+          product_code: true,
+        },
+      }),
+      prisma.campaigns.findMany({
+        where: {
+          product_id: { array_contains: product.prod_id },
+          NOT: { status: "N" },
+        },
+      }),
+    ]);
+
+    // 3️⃣ Update expired campaigns (same logic as above API)
+    const updatedCampaigns = await Promise.all(
+      coupon.map(async (campaign) => {
+        if (campaign.status === "Y" && istDate > campaign.end_date) {
+          await prisma.campaigns.update({
+            where: { id: campaign.id },
+            data: { status: "N" },
+          });
+          return { ...campaign, status: "N" };
+        } else {
+          return campaign;
+        }
+      })
+    );
+
+    const activeCampaigns = updatedCampaigns.filter((campaign) => {
+      return (
+        currentDate >= campaign.start_date && currentDate <= campaign.end_date
+      );
+    });
+
+    // 4️⃣ Build response in same structure
+    const responseData = {
+      product_id: product.prod_id,
+      prod_type: productTypeResult?.product_type || null,
+      product_name: productTypeResult?.product_name || null,
+      color_family: productTypeResult?.color_family || null,
+      color: productTypeResult?.color || null,
+      package: productTypeResult?.package || null,
+      no_of_items: productTypeResult?.no_of_items || null,
+      total_quantity: product.total_quantity,
+      mrp: maxMrp._max.mrp,
+      original_price: maxMrp._min.selling_price,
+      product_code: productTypeResult?.product_code || null,
+      activeCampaigns,
+      barcode_text: product.barcode_text,
+      barcode_image: product.barcode, // S3 URL
+      batch_id: product.batch_id,
+    };
+
     response.status(200).json({
       success: true,
-      data: {
-        prod_id: product.prod_id,
-        sales_id: product.sales_id,
-        product_name: product.product_master.product_name,
-        batch_id: product.batch_id,
-        selling_price: product.selling_price,
-        mrp: product.mrp,
-        barcode_text: product.barcode_text, // helpful for UI
-        barcode_image: product.barcode, // S3 URL
-      },
+      data: responseData,
     });
   } catch (error) {
     console.error("Error scanning barcode:", error);
