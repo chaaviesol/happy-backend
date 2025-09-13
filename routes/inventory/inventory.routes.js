@@ -8,5 +8,5 @@ const inventoryRouter = express.Router();
 
 inventoryRouter.post("/", viewInventory);
 inventoryRouter.post("/generatebarcode", generateBarcode);
-inventoryRouter.post("/scanBarcode", scanBarcode);
+inventoryRouter.get("/scanBarcode", scanBarcode);
 module.exports = inventoryRouter;
