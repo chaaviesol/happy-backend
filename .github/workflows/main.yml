@@ -1,53 +1,37 @@
-name: Deploy Happy Backend to EC2
+name: Deploy to EC2
 
 on:
   push:
     branches:
-      - main
+      - main   # change to your branch if needed
+  workflow_dispatch:
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Deploy to EC2
-        uses: appleboy/ssh-action@v1.0.3
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Copy repo to EC2
+        uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}   # ec2-user for Amazon Linux
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: "./"
+          target: "/home/${{ secrets.EC2_USER }}/happy"   # update with your target folder
+
+      - name: SSH into EC2 and pull latest changes
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            # Variables
-            APP_DIR="/home/ec2-user/happy-backend"
-            NODE_PATH="/usr/bin"
-
-            # Install Git, Node.js, npm if missing
-            sudo dnf install -y git nodejs npm
-            sudo npm install -g pm2
-
-            # Setup PM2 systemd startup with correct Node path (idempotent)
-            sudo env PATH=$PATH:$NODE_PATH /usr/lib/node_modules/pm2/bin/pm2 startup systemd -u ec2-user --hp /home/ec2-user || true
-
-            # Remove any old errored PM2 processes with same name
-            pm2 delete happy-backend || true
-
-            # Clone or pull latest backend repo
-            if [ -d "$APP_DIR/.git" ]; then
-              cd $APP_DIR
-              git reset --hard
-              git pull origin main
-            else
-              rm -rf $APP_DIR
-              git clone -b main https://github.com/chaaviesol/happy-backend.git $APP_DIR
-              cd $APP_DIR
-            fi
-
-            # Install dependencies
-            npm install --production
-
-            # Start or restart backend with PM2
-            pm2 restart happy-backend || pm2 start server.js --name happy-backend
-
-
-            # Save PM2 process list for reboot persistence
-            pm2 save
+            cd /home/${{ secrets.EC2_USER }}/happy
+            git reset --hard
+            git pull origin main
+            npm install   # if Node.js
+            pm2 restart all || pm2 start npm -- start
