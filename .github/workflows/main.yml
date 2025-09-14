@@ -46,7 +46,8 @@ jobs:
             npm install --production
 
             # Start or restart backend with PM2
-            pm2 start server.js || pm2 restart server.js
+            pm2 restart happy-backend || pm2 start server.js --name happy-backend
+
 
             # Save PM2 process list for reboot persistence
             pm2 save
