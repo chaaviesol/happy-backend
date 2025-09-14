@@ -34,5 +34,11 @@ jobs:
             git reset --hard
             git pull origin main
             npm install
+            npm rebuild bcrypt --build-from-source
             npx prisma generate
-            pm2 start server.js --name happy-backend || pm2 restart happy-backend
+            pm2 delete happy-backend || true
+            AWS_BUCKET_NAME=${{ secrets.AWS_BUCKET_NAME }} \
+            AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} \
+            AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} \
+            AWS_REGION=ap-south-1 \
+            pm2 start server.js --name happy-backend
