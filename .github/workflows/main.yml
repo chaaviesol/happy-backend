@@ -3,7 +3,7 @@ name: Deploy Happy Backend to EC2
 on:
   push:
     branches:
-      - main   # Trigger on push to main
+      - main
 
 jobs:
   deploy:
@@ -14,23 +14,39 @@ jobs:
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
+          username: ${{ secrets.EC2_USER }}   # ec2-user for Amazon Linux
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            # Navigate to target directory (create if not exists)
-            mkdir -p /home/ec2-user/happy-backend
-            cd /home/ec2-user/happy-backend
+            # Variables
+            APP_DIR="/home/ec2-user/happy-backend"
+            NODE_PATH="/usr/bin"
 
-            # If repo already exists, pull latest, else clone
-            if [ -d ".git" ]; then
+            # Install Git, Node.js, npm if missing
+            sudo dnf install -y git nodejs npm
+            sudo npm install -g pm2
+
+            # Setup PM2 systemd startup with correct Node path (idempotent)
+            sudo env PATH=$PATH:$NODE_PATH /usr/lib/node_modules/pm2/bin/pm2 startup systemd -u ec2-user --hp /home/ec2-user || true
+
+            # Remove any old errored PM2 processes with same name
+            pm2 delete happy-backend || true
+
+            # Clone or pull latest backend repo
+            if [ -d "$APP_DIR/.git" ]; then
+              cd $APP_DIR
               git reset --hard
               git pull origin main
             else
-              git clone -b main https://github.com/chaaviesol/happy-backend.git .
+              rm -rf $APP_DIR
+              git clone -b main https://github.com/chaaviesol/happy-backend.git $APP_DIR
+              cd $APP_DIR
             fi
 
             # Install dependencies
             npm install --production
 
-            # Restart backend (using PM2, change if needed)
-            pm2 restart happy-backend || pm2 start server.js --name happy-backend
+            # Start or restart backend with PM2
+            pm2 start server.js --name happy-backend || pm2 restart happy-backend
+
+            # Save PM2 process list for reboot persistence
+            pm2 save
