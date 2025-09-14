@@ -3,7 +3,7 @@ name: Deploy to EC2
 on:
   push:
     branches:
-      - main   # change to your branch if needed
+      - main   # change if needed
   workflow_dispatch:
 
 jobs:
@@ -21,9 +21,9 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           source: "./"
-          target: "/home/${{ secrets.EC2_USER }}/happy"   # update with your target folder
+          target: "/home/${{ secrets.EC2_USER }}/happy"
 
-      - name: SSH into EC2 and pull latest changes
+      - name: SSH into EC2 and deploy
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.EC2_HOST }}
@@ -33,5 +33,6 @@ jobs:
             cd /home/${{ secrets.EC2_USER }}/happy
             git reset --hard
             git pull origin main
-            npm install   # if Node.js
-            pm2 restart all || pm2 start npm -- start
+            npm install
+            npx prisma generate
+            pm2 start server.js --name happy-backend || pm2 restart happy-backend
