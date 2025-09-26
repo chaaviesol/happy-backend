@@ -80,6 +80,7 @@ const viewInventory = async (request, response) => {
                 image2_link: true,
                 image3_link: true,
                 product_sub_type: true,
+                product_code:true,
                 prod_subtype2: true,
                 brand: {
                   select: {
@@ -124,6 +125,7 @@ const viewInventory = async (request, response) => {
                 product_id: true,
                 product_name: true,
                 product_type: true,
+                product_code:true,
                 color: true,
                 color_family: true,
                 min_stk: true,
