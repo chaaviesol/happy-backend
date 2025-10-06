@@ -257,6 +257,7 @@ const viewInventory = async (request, response) => {
 // };
 
 const { createCanvas, loadImage } = require("canvas");
+const { log } = require("console");
 
 const generateBarcode = async (request, response) => {
   const { prod_id, po_num, batch_id, INVENTORY_id } = request.body;
@@ -423,11 +424,13 @@ const scanBarcode = async (request, response) => {
     // Scanner sends decoded barcode text
     // Example: ?barcode=101-2024-55
     const { barcode } = request.query;
-
+    
+    
     if (!barcode) {
       return response.status(400).json({ error: "Barcode text is required" });
     }
-
+    
+    console.log("qq Barcode ",barcode);
     // 1️⃣ Find product by barcode_text
     const product = await prisma.inventory.findFirst({
       where: {
