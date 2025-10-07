@@ -154,6 +154,8 @@ const viewInventory = async (request, response) => {
             status: isOutOfStock ? "outofstock" : "instock",
           };
         });
+        console.log("🔍 Sample Inventory:", JSON.stringify(inventoryWithStatus[0], null, 2));
+
         response.status(200).json(inventoryWithStatus);
       }
     } else {
@@ -166,6 +168,11 @@ const viewInventory = async (request, response) => {
     logger.error(`An error occurred: ${error.message} in inventory api`);
     response.status(500).json({ error: "An error occurred" });
   } finally {
+    const test = await prisma.product_master.findFirst({
+  select: { product_id: true, product_name: true, product_code: true },
+});
+console.log("product_master test:", test);
+
     await prisma.$disconnect();
   }
 };

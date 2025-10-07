@@ -70,7 +70,7 @@ const newsalesOrder = async (request, response) => {
         // const created_by = request.body.customer_id.toString();
         const so_notes = request.body.notes;
         const prod_list = request.body.products;
-        const discount = parseInt(request.body.discount);
+        const discount = request.body.discount;
         const prod_name_array = prod_list.map((prod) => prod.product_id);
         if (!so_status && !prod_list) {
           response.status(404).json({
@@ -1014,7 +1014,7 @@ const quoted_details = async (request, response) => {
         user_id: sales_orders.users.user_id,
         user_name: sales_orders.users.user_name,
         sales_id: sales_orders.sales_id,
-        discount: { discount: sales_orders?.discount }, //changed from just discount to this format
+        discount: sales_orders?.discount , //changed from just discount to this format
       });
 
       const sales_list = await prisma.sales_list.findMany({
