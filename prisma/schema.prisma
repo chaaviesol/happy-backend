@@ -346,7 +346,7 @@ model sales_order_new {
   updated_date           DateTime?                @db.Timestamp(6)
   so_notes               Json?                    @db.Json
   customer_id            Int?
-  discount               Int?
+  discount               Json?
   ispayment_completed    String?                  @db.VarChar(1)
   roundoff_disc          Decimal?                 @db.Decimal
   sales_list             sales_list[]

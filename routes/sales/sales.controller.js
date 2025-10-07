@@ -70,7 +70,7 @@ const newsalesOrder = async (request, response) => {
         // const created_by = request.body.customer_id.toString();
         const so_notes = request.body.notes;
         const prod_list = request.body.products;
-        const discount = parseInt(request.body.discount?.discount);
+        const discount = parseInt(request.body.discount);
         const prod_name_array = prod_list.map((prod) => prod.product_id);
         if (!so_status && !prod_list) {
           response.status(404).json({
@@ -1207,7 +1207,7 @@ const quoted_salesorder = async (request, response) => {
       const quotation_link = request.body.doclink;
       const so_status = request.body.so_status;
       const remarks = request.body.remarks;
-      const discount = request.body.discount?.discount || 0;
+      const discount = request.body.discount || 0;
       const prod_list = request.body.products;
 
       if (customer_id && sales_id && so_status) {
