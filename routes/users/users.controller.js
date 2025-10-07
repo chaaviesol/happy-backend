@@ -1,32 +1,35 @@
-const { PrismaClient } = require('@prisma/client');
+const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 const bcrypt = require("bcrypt");
 const nodemailer = require("nodemailer");
 const hbs = require("nodemailer-express-handlebars");
 const path = require("path");
-const { stringify } = require('querystring');
-const { isDate } = require('util/types');
-const winston = require('winston');
-const fs = require('fs');
+const { stringify } = require("querystring");
+const { isDate } = require("util/types");
+const winston = require("winston");
+const fs = require("fs");
 const jwt = require("jsonwebtoken");
-const { response } = require('express');
-require('dotenv').config();
+const { response } = require("express");
+require("dotenv").config();
 
 // Create a logs directory if it doesn't exist
-const logDirectory = './logs';
+const logDirectory = "./logs";
 if (!fs.existsSync(logDirectory)) {
   fs.mkdirSync(logDirectory);
 }
 
 // Configure the Winston logger
 const logger = winston.createLogger({
-  level: 'info',
+  level: "info",
   format: winston.format.combine(
     winston.format.timestamp(),
     winston.format.json()
   ),
   transports: [
-    new winston.transports.File({ filename: `${logDirectory}/error.log`, level: 'error' }),
+    new winston.transports.File({
+      filename: `${logDirectory}/error.log`,
+      level: "error",
+    }),
     new winston.transports.File({ filename: `${logDirectory}/combined.log` }),
   ],
 });
@@ -52,10 +55,9 @@ const addUsers = async (request, response) => {
       gst: gst,
       sup_code: sup_code,
       tradename: tradename,
-      Tradeoption: Tradeoption
+      Tradeoption: Tradeoption,
     } = request.body;
-    if (type && name   && address && prod_type  && gst ) {
-
+    if (type && name && mob) {
       // Example usage:
       // const mobileNumber = mob;
       // if (validateMobileNumber(mobileNumber)) {
@@ -96,12 +98,12 @@ const addUsers = async (request, response) => {
           id: true,
         },
         orderBy: {
-          id: 'desc',
+          id: "desc",
         },
       });
 
       const new_id = maxIdResult ? maxIdResult.id + 1 : 1;
-      let user_type_upper = type.toUpperCase()
+      let user_type_upper = type.toUpperCase();
       const recentUserResults = await prisma.users.findMany({
         select: {
           id: true,
@@ -113,10 +115,9 @@ const addUsers = async (request, response) => {
             gte: new Date(istDate.getFullYear(), 0, 1),
             lt: new Date(istDate.getFullYear() + 1, 0, 1),
           },
-
         },
         orderBy: {
-          id: 'desc',
+          id: "desc",
         },
       });
 
@@ -125,11 +126,9 @@ const addUsers = async (request, response) => {
 
       if (recentUserResults) {
         new_user_id = recentUserResults.length + 1;
-      }
-      else if (recentUserResults == null || recentUserResults == undefined) {
+      } else if (recentUserResults == null || recentUserResults == undefined) {
         // Handle the case when there are no matching records
         new_user_id = 1;
-
       }
 
       const u_id =
@@ -162,11 +161,12 @@ const addUsers = async (request, response) => {
           is_user_flagged: u_flagged,
           trade_name: tradename,
           sup_code: sup_code,
-          trade_option: Tradeoption
+          trade_option: Tradeoption,
         },
       });
 
-      const respText = "User with ID " + u_id + " is created and is pending for approval";
+      const respText =
+        "User with ID " + u_id + " is created";
       const notification = await prisma.adm_notification.create({
         data: {
           text: respText,
@@ -174,18 +174,18 @@ const addUsers = async (request, response) => {
           read: "N",
           type: "UR",
           created_date: istDate,
-          verification_id: u_id
-        }
-      })
+          verification_id: u_id,
+        },
+      });
       response.status(201).json(respText);
     } else {
-      logger.error(`All fields are mandatory in addUsers api`)
+      logger.error(`All fields are mandatory in addUsers api`);
       response.status(500).json("All fields are mandatory");
     }
   } catch (error) {
-    logger.error(`Internal server error: ${error.message} in addUsers api`)
+    logger.error(`Internal server error: ${error.message} in addUsers api`);
     response.status(500).json("An error occurred");
-  }finally {
+  } finally {
     await prisma.$disconnect();
   }
 };
@@ -213,7 +213,6 @@ const updateuser = async (request, response) => {
         landline,
         website,
         address,
-
       } = request.body;
 
       try {
@@ -236,13 +235,13 @@ const updateuser = async (request, response) => {
         const respText = user_name + " updated successfully";
         response.status(201).json({ message: respText, data: updatedUser });
       } catch (err) {
-        response.status(500).json('Internal Server Error');
+        response.status(500).json("Internal Server Error");
       }
     }
   } catch (error) {
     logger.error(`Internal server error: ${error.message} in updateuser api`);
     response.status(500).json(error.message);
-  }finally {
+  } finally {
     await prisma.$disconnect();
   }
 };
@@ -265,7 +264,7 @@ const deleteuser = async (request, response) => {
           user_id: user_id,
         },
         data: {
-          is_active: 'N',
+          is_active: "N",
         },
       });
       const respText = "User deleted!";
@@ -273,8 +272,8 @@ const deleteuser = async (request, response) => {
     }
   } catch (err) {
     logger.error(`Internal server error: ${err.message} in deleteuser api`);
-    response.status(500).json('Internal Server Error');
-  }finally {
+    response.status(500).json("Internal Server Error");
+  } finally {
     await prisma.$disconnect();
   }
 };
@@ -282,7 +281,7 @@ const deleteuser = async (request, response) => {
 ////////admin/////////////
 const addadmin = async (request, response) => {
   // const usertype = request.user.userType
-  const usertype = "SU"
+  const usertype = "SU";
   try {
     if (usertype === "SU" || usertype === "ADM") {
       const {
@@ -292,23 +291,18 @@ const addadmin = async (request, response) => {
         email: email,
         mobile: mobile,
         department: department,
-        division: division
+        division: division,
       } = request.body;
-      if (type &&
-        user_name &&
-        Password &&
-        email &&
-        mobile &&
-        division) {
-        const up_type = type.toUpperCase()
+      if (type && user_name && Password && email && mobile && division) {
+        const up_type = type.toUpperCase();
 
         // Example usage:
         const mobileNumber = mobile;
         if (validateMobileNumber(mobileNumber)) {
-          console.log('Valid mobile number');
+          console.log("Valid mobile number");
         } else {
-          console.log('Invalid mobile number');
-          const resptext = "Invalid mobile number"
+          console.log("Invalid mobile number");
+          const resptext = "Invalid mobile number";
           return response.send(resptext);
         }
         function validateMobileNumber(mobileNumber) {
@@ -320,10 +314,10 @@ const addadmin = async (request, response) => {
         // Example usage:
         const email_id = email;
         if (validateEmail(email_id)) {
-          console.log('Valid email address');
+          console.log("Valid email address");
         } else {
-          console.log('Invalid email address');
-          const resptext = "Invalid email address"
+          console.log("Invalid email address");
+          const resptext = "Invalid email address";
           return response.send(resptext);
         }
         function validateEmail(email_id) {
@@ -332,7 +326,6 @@ const addadmin = async (request, response) => {
 
           return emailRegex.test(email_id);
         }
-
 
         const hasedpass = bcrypt.hashSync(Password, 5);
         const u_created = new Date();
@@ -364,8 +357,7 @@ const addadmin = async (request, response) => {
 
         if (recentUserResult) {
           new_user_id = recentUserResult.id + 1;
-        }
-        else {
+        } else {
           // Handle the case when there are no matching records
           new_user_id = 1;
         }
@@ -385,21 +377,21 @@ const addadmin = async (request, response) => {
             mobile: mobile,
             user_type: up_type,
             is_active: "Y",
-            created_date: istDate
-          }
-        })
+            created_date: istDate,
+          },
+        });
         const createStaffUserResponse = await prisma.staff_users.create({
           data: {
             user_id: ad_id,
             division: division,
-            department: department
-          }
+            department: department,
+          },
         });
         response.status(200).json({
           success: true,
-          message: "success"
-        })
-        const respText="Success"
+          message: "success",
+        });
+        const respText = "Success";
         // const notification = await prisma.adm_notification.create({
         //   data: {
         //     text: respText,
@@ -411,7 +403,7 @@ const addadmin = async (request, response) => {
         //   }
         // })
       } else {
-        logger.error(`All fields are mandatory in addadmin api`)
+        logger.error(`All fields are mandatory in addadmin api`);
         response.status(500).json("All fields are mandatory");
       }
     } else {
@@ -420,19 +412,17 @@ const addadmin = async (request, response) => {
         .status(403)
         .json({ message: "Unauthorized. You are not a super admin" });
     }
-
-  }
-  catch (error) {
+  } catch (error) {
     response.status(500).json(error.message);
     logger.error(`Internal server error: ${error.message} in addadmin api`);
-  }finally {
+  } finally {
     await prisma.$disconnect();
   }
-}
+};
 
 ////////////addsuperadmin///////////////////////////////////
 const superadmin = async (request, response) => {
-  const usertype = request.user.userType
+  const usertype = request.user.userType;
 
   try {
     if (usertype === "SU" || usertype === "ADM") {
@@ -443,13 +433,9 @@ const superadmin = async (request, response) => {
         mobile: mobile,
         // division: division
       } = request.body;
-      const type = "ADM"
-      if (type &&
-        user_name &&
-        password &&
-        email &&
-        mobile) {
-        const up_type = "SU"
+      const type = "ADM";
+      if (type && user_name && password && email && mobile) {
+        const up_type = "SU";
         // const u_approved = "N";
         // const u_active = "N";
         // const u_flagged = "N";
@@ -457,10 +443,10 @@ const superadmin = async (request, response) => {
 
         const mobileNumber = mobile;
         if (validateMobileNumber(mobileNumber)) {
-          console.log('Valid mobile number');
+          console.log("Valid mobile number");
         } else {
-          console.log('Invalid mobile number');
-          const resptext = "Invalid mobile number"
+          console.log("Invalid mobile number");
+          const resptext = "Invalid mobile number";
           return response.send(resptext);
         }
         function validateMobileNumber(mobileNumber) {
@@ -472,10 +458,10 @@ const superadmin = async (request, response) => {
         // Example usage:
         const email_id = email;
         if (validateEmail(email_id)) {
-          console.log('Valid email address');
+          console.log("Valid email address");
         } else {
-          console.log('Invalid email address');
-          const resptext = "Invalid email address"
+          console.log("Invalid email address");
+          const resptext = "Invalid email address";
           return response.send(resptext);
         }
         function validateEmail(email_id) {
@@ -510,8 +496,7 @@ const superadmin = async (request, response) => {
 
         if (recentUserResult) {
           new_user_id = recentUserResult.id + 1;
-        }
-        else {
+        } else {
           new_user_id = 1;
         }
         const ad_id =
@@ -530,17 +515,16 @@ const superadmin = async (request, response) => {
             mobile: mobile,
             user_type: up_type,
             is_active: "Y",
-            created_date: istDate
-          }
-        })
+            created_date: istDate,
+          },
+        });
         response.status(200).json({
           message: "successfully registered",
           success: true,
-          error: false
-        })
-
+          error: false,
+        });
       } else {
-        logger.error(`All fields are mandatory in superadmin api`)
+        logger.error(`All fields are mandatory in superadmin api`);
         response.status(500).json("All fields are mandatory");
       }
     } else {
@@ -549,18 +533,17 @@ const superadmin = async (request, response) => {
         .status(403)
         .json({ message: "Unauthorized. You are not a super admin" });
     }
-  }
-  catch (error) {
-    console.log(error)
+  } catch (error) {
+    console.log(error);
     response.status(500).json(error.message);
     logger.error(`Internal server error: ${error.message} in addadmin api`);
-  }finally {
+  } finally {
     await prisma.$disconnect();
   }
-}
+};
 
 const viewSuppliers = async (request, response) => {
-  const usertype = request.user.userType
+  const usertype = request.user.userType;
   try {
     if (usertype === "ADM" || usertype === "SU") {
       const prod_category = request.body.main_type;
@@ -572,12 +555,11 @@ const viewSuppliers = async (request, response) => {
           user_id: true,
           trade_name: true,
           product_type: true,
-
         },
         where: {
           user_type: user_type,
-          is_approved: 'Y'
-        }
+          is_approved: "Y",
+        },
       });
 
       let suppArray = [];
@@ -603,72 +585,76 @@ const viewSuppliers = async (request, response) => {
         .json({ message: "Unauthorized. You are not an admin" });
     }
   } catch (error) {
-    logger.error(`Internal server error: ${error.message} in viewSuppliers api`);
+    logger.error(
+      `Internal server error: ${error.message} in viewSuppliers api`
+    );
     response.status(500).json(error.message);
-  }finally {
+  } finally {
     await prisma.$disconnect();
   }
 };
 
 ///////////userdetails/////////
 const viewUserDetails = async (request, response) => {
-  const user_id = request.body.user_id
+  const user_id = request.body.user_id;
   try {
     if (user_id) {
       const viewuser = await prisma.users.findFirst({
         where: {
-          user_id: user_id
-        }
+          user_id: user_id,
+        },
       });
       response.status(201).json(viewuser);
     } else {
-      logger.error("user_id is undefined in viewUserDetails api")
+      logger.error("user_id is undefined in viewUserDetails api");
     }
   } catch (error) {
-    logger.error(`Internal server error: ${error.message} in viewUserDetails api`);
+    logger.error(
+      `Internal server error: ${error.message} in viewUserDetails api`
+    );
     response.status(500).json(error.message);
-  }finally {
+  } finally {
     await prisma.$disconnect();
   }
 };
 
 const userApproval = async (request, response) => {
-  const usertype = request.user.userType
+  const usertype = request.user.userType;
   try {
     if (usertype === "SU" || usertype === "ADM") {
       const user_id = request.body.user_id;
       const approvalflag = request.body.approvalflag;
       const mod_date = new Date();
-      const sup_code = request.body.sup_code
+      const sup_code = request.body.sup_code;
 
       if (approvalflag == null) {
-        const respText = 'Error! Approval cannot be null';
+        const respText = "Error! Approval cannot be null";
         response.status(201).json(respText);
       } else {
         await prisma.users.update({
           where: {
-            user_id: user_id
+            user_id: user_id,
           },
           data: {
             is_active: approvalflag,
             is_approved: approvalflag,
             sup_code: sup_code,
-            updated_date: mod_date
-          }
+            updated_date: mod_date,
+          },
         });
 
         const user = await prisma.users.findUnique({
           where: {
-            user_id: user_id
+            user_id: user_id,
           },
           select: {
             id: true,
             user_name: true,
-            trade_name: true
-          }
+            trade_name: true,
+          },
         });
-        let respText = '';
-        if (approvalflag == 'Y') {
+        let respText = "";
+        if (approvalflag == "Y") {
           const respText = `${user.user_name} from M/s ${user.trade_name} is now an approved user`;
 
           const notification = await prisma.cus_notification.create({
@@ -678,12 +664,11 @@ const userApproval = async (request, response) => {
               read: "N",
               type: "UR",
               created_date: istDate,
-              verification_id: user_id
-            }
-
-          })
+              verification_id: user_id,
+            },
+          });
           response.status(201).json(respText);
-        } else if (approvalflag == 'N') {
+        } else if (approvalflag == "N") {
           const respText = `M/s ${user.trade_name} has been made inactive`;
           const notification = await prisma.cus_notification.create({
             data: {
@@ -692,12 +677,11 @@ const userApproval = async (request, response) => {
               read: "N",
               type: "UR",
               created_date: istDate,
-              verification_id: user_id
-            }
-          })
+              verification_id: user_id,
+            },
+          });
           response.status(201).json(respText);
         }
-
       }
     } else {
       logger.error(`Unauthorized- in userApproval api`);
@@ -708,25 +692,27 @@ const userApproval = async (request, response) => {
   } catch (error) {
     logger.error(`Internal server error: ${error.message} in userApproval api`);
     response.status(500).json(error.message);
-  }finally {
+  } finally {
     await prisma.$disconnect();
   }
 };
 
 const approveUsersList = async (request, response) => {
-  const usertype = request.user.userType
+  const usertype = request.user.userType;
   try {
     if (usertype === "SU" || usertype === "ADM") {
       const approved = "N";
       const approveusers = await prisma.users.findMany({
         where: {
-          is_approved: approved
+          is_approved: approved,
         },
         orderBy: {
-          id: "desc"
-        }
+          id: "desc",
+        },
       });
-      const filteredUsers = approveusers.filter(user => user.user_type !== 'ADM')
+      const filteredUsers = approveusers.filter(
+        (user) => user.user_type !== "ADM"
+      );
       response.status(200).json(filteredUsers);
     } else {
       logger.error(`Unauthorized- in approveUsersList api`);
@@ -734,14 +720,15 @@ const approveUsersList = async (request, response) => {
         .status(403)
         .json({ message: "Unauthorized. You are not an admin" });
     }
-  }
-  catch (error) {
+  } catch (error) {
     response.status(500).json(error.message);
-    logger.error(`Internal server error: ${error.message} in approveUsersList api`);
-  }finally {
+    logger.error(
+      `Internal server error: ${error.message} in approveUsersList api`
+    );
+  } finally {
     await prisma.$disconnect();
   }
-}
+};
 
 const getSingleDataById = async (request, response) => {
   // const usertype=request.user.userType
@@ -757,24 +744,26 @@ const getSingleDataById = async (request, response) => {
     if (viewuser) {
       response.status(200).json(viewuser);
     } else {
-      response.status(404).json({ error: 'Data not found' });
+      response.status(404).json({ error: "Data not found" });
     }
     // }else{
     //   logger.error(`Unauthorized- in getSingleDataById api`);
     //   return response
     //     .status(403)
-    //     .json({ message: "Unauthorized. You are not an admin" });     
+    //     .json({ message: "Unauthorized. You are not an admin" });
     // }
   } catch (error) {
-    logger.error(`Internal server error: ${error.message} in getSingleDataById api`);
-    response.status(500).json({ error: 'An error occurred' });
-  }finally {
+    logger.error(
+      `Internal server error: ${error.message} in getSingleDataById api`
+    );
+    response.status(500).json({ error: "An error occurred" });
+  } finally {
     await prisma.$disconnect();
   }
 };
 
 const supplierCodes = async (request, response) => {
-  const usertype = request.user.userType
+  const usertype = request.user.userType;
   try {
     if (usertype === "ADM" || usertype === "SU") {
       const type = request.body.type;
@@ -799,16 +788,18 @@ const supplierCodes = async (request, response) => {
         .json({ message: "Unauthorized. You are not an admin" });
     }
   } catch (error) {
-    logger.error(`Internal server error: ${error.message} in supplierCodes api`);
+    logger.error(
+      `Internal server error: ${error.message} in supplierCodes api`
+    );
     response.status(500).json(error.message);
-  }finally {
+  } finally {
     await prisma.$disconnect();
   }
 };
 
 const userFeedback = async (request, response) => {
-  const usertype = request.user.userType
-  const id = request.user.id
+  const usertype = request.user.userType;
+  const id = request.user.id;
   try {
     if (usertype === "SU" || usertype === "ADM") {
       const {
@@ -820,7 +811,7 @@ const userFeedback = async (request, response) => {
         is_user_flagged,
         post,
       } = request.body;
-      const post_by = parseInt(request.body.post_by)
+      const post_by = parseInt(request.body.post_by);
       const post_date = new Date();
 
       if (method && user_id) {
@@ -837,7 +828,7 @@ const userFeedback = async (request, response) => {
                 created_date: post_date,
               },
             });
-            const respText = "Feedback added"
+            const respText = "Feedback added";
             // const notification = await prisma.adm_notification.create({
             //   data: {
             //     text: respText,
@@ -865,8 +856,8 @@ const userFeedback = async (request, response) => {
             const userFeedbacks = await prisma.user_feeback.findMany({
               where: { user_id },
               orderBy: {
-                id: "desc"
-              }
+                id: "desc",
+              },
             });
             response.status(200).json(userFeedbacks);
             break;
@@ -891,14 +882,15 @@ const userFeedback = async (request, response) => {
                 is_user_flagged,
               },
             });
-            response.status(201).json(method === "flag" ? "User flagged" : "Feedback added");
+            response
+              .status(201)
+              .json(method === "flag" ? "User flagged" : "Feedback added");
             break;
 
           default:
             response.status(400).json({ message: "Invalid method" });
         }
-      }
-      else {
+      } else {
         logger.error(`method and user_id are mandatory- in userFeedback api`);
       }
     } else {
@@ -907,11 +899,12 @@ const userFeedback = async (request, response) => {
         .status(403)
         .json({ message: "Unauthorized. You are not an admin" });
     }
-
   } catch (error) {
     logger.error(`Internal server error: ${error.message} in userFeedback api`);
-    response.status(500).json({ error: 'An error occurred while processing the request.' });
-  }finally {
+    response
+      .status(500)
+      .json({ error: "An error occurred while processing the request." });
+  } finally {
     await prisma.$disconnect();
   }
 };
@@ -934,14 +927,13 @@ const userDetails = async (request, response) => {
         response.status(201).json(user);
       }
     } else {
-      const division = request.body.division
+      const division = request.body.division;
       const user_type = request.body.user_type.toUpperCase();
 
-      if (!user_type || typeof user_type !== 'string') {
+      if (!user_type || typeof user_type !== "string") {
         response.status(400).json({ error: "Invalid user_type" });
         return;
-      }
-      else {
+      } else {
         if (!division) {
           const suppliers = await prisma.users.findMany({
             where: {
@@ -952,14 +944,13 @@ const userDetails = async (request, response) => {
           });
 
           response.status(201).json(suppliers);
-        }
-        else {
+        } else {
           const suppliers = await prisma.users.findMany({
             where: {
               user_type: {
                 equals: user_type,
               },
-              is_approved: "Y"
+              is_approved: "Y",
             },
           });
           let suppArray = [];
@@ -968,7 +959,7 @@ const userDetails = async (request, response) => {
               const prodTypesArray = Object.values(suppliers[i].product_type);
               if (prodTypesArray.includes(division)) {
                 let supData = {
-                  supFullData: suppliers[i]
+                  supFullData: suppliers[i],
                 };
 
                 suppArray.push(supData.supFullData);
@@ -984,12 +975,12 @@ const userDetails = async (request, response) => {
     //   logger.error(`Unauthorized- in userDetails api`);
     //   return response
     //     .status(403)
-    //     .json({ message: "Unauthorized. You are not an admin" });     
+    //     .json({ message: "Unauthorized. You are not an admin" });
     // }
   } catch (error) {
     logger.error(`Internal server error: ${error.message} in userDetails api`);
     response.status(500).json({ error: "Internal server error" });
-  }finally {
+  } finally {
     await prisma.$disconnect();
   }
 };
@@ -1001,16 +992,16 @@ const userApprovalbyID = async (request, response) => {
 
   if (!email || !approval) {
     response.status(400).json({
-      error: 'All fields are mandatory!',
+      error: "All fields are mandatory!",
     });
-    throw new Error('All fields are mandatory!');
+    throw new Error("All fields are mandatory!");
   } else {
     const mod_date = new Date();
 
     try {
       const characters =
-        'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
-      let password = '';
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*";
+      let password = "";
 
       for (let i = 0; i < 8; i++) {
         const randomIndex = Math.floor(Math.random() * characters.length);
@@ -1035,16 +1026,16 @@ const userApprovalbyID = async (request, response) => {
         response.status(200).json({
           success: true,
           error: false,
-          message: 'user approved successfully',
+          message: "user approved successfully",
         });
 
         // Mailing section
         const transporter = nodemailer.createTransport({
-          host: 'smtp.zoho.in',
+          host: "smtp.zoho.in",
           port: 465,
           auth: {
             user: process.env.EMAIL_USER,
-            pass: process.env.EMAIL_PASSWORD
+            pass: process.env.EMAIL_PASSWORD,
           },
           secure: true,
           tls: {
@@ -1053,17 +1044,17 @@ const userApprovalbyID = async (request, response) => {
         });
         const handlebarOptions = {
           viewEngine: {
-            partialsDir: path.resolve('./views'),
+            partialsDir: path.resolve("./views"),
             defaultLayout: false,
           },
-          viewPath: path.resolve('./views'),
+          viewPath: path.resolve("./views"),
         };
-        transporter.use('compile', hbs(handlebarOptions));
+        transporter.use("compile", hbs(handlebarOptions));
         let mailOptions = {
-          from: 'support@chaavie.com', // sender address
+          from: "support@chaavie.com", // sender address
           to: email,
-          subject: 'OTP Mail', // Subject line
-          template: 'user_approve_mail',
+          subject: "OTP Mail", // Subject line
+          template: "user_approve_mail",
           context: {
             username: username,
             password: password,
@@ -1071,19 +1062,20 @@ const userApprovalbyID = async (request, response) => {
         };
         transporter.sendMail(mailOptions, function (err, info) {
           if (err) {
-            return
+            return;
           }
-
         });
       } else {
         response.status(404).json({
           error: true,
           success: false,
-          message: 'No user found!',
+          message: "No user found!",
         });
       }
     } catch (err) {
-      logger.error(`Internal server error: ${err.message} in userApprovalbyID api`);
+      logger.error(
+        `Internal server error: ${err.message} in userApprovalbyID api`
+      );
       throw err;
     }
   }
@@ -1092,12 +1084,12 @@ const userApprovalbyID = async (request, response) => {
 /* user login --------------------------------------------- */
 const userLogin = async (request, response) => {
   const { email, password } = request.body;
-  console.log("loginnnn")
+  console.log("loginnnn");
   if (!email || !password) {
     return response.status(401).json({
       error: true,
       success: false,
-      message: 'Email and password required',
+      message: "Email and password required",
     });
   }
 
@@ -1105,12 +1097,12 @@ const userLogin = async (request, response) => {
     const user = await prisma.users.findFirst({
       where: { email: email },
     });
-    console.log("user=======================", user)
+    console.log("user=======================", user);
     if (!user) {
       return response.status(401).json({
         error: true,
         success: false,
-        message: 'Incorrect Email or password!',
+        message: "Incorrect Email or password!",
       });
     }
 
@@ -1125,7 +1117,7 @@ const userLogin = async (request, response) => {
         return response.status(500).json({
           error: true,
           success: false,
-          message: 'Password hashing error',
+          message: "Password hashing error",
         });
       }
 
@@ -1133,14 +1125,13 @@ const userLogin = async (request, response) => {
         return response.status(401).json({
           error: true,
           success: false,
-          message: 'Please check your password!',
+          message: "Please check your password!",
         });
       }
 
       const refreshTokenPayload = {
         id: logged_id,
-        userType: type
-
+        userType: type,
       };
 
       const accessTokenPayload = {
@@ -1149,11 +1140,11 @@ const userLogin = async (request, response) => {
       };
 
       const refreshTokenOptions = {
-        expiresIn: '900m',
+        expiresIn: "900m",
       };
 
       const accessTokenOptions = {
-        expiresIn: '5m',
+        expiresIn: "5m",
       };
 
       const refreshToken = jwt.sign(
@@ -1199,22 +1190,22 @@ const userLogin = async (request, response) => {
           division: staff?.division,
           department: {
             equals: staff?.department,
-            mode: 'insensitive'
-          }
+            mode: "insensitive",
+          },
         },
       });
 
-      console.log('access=====', access);
+      console.log("access=====", access);
 
       const division = staff?.division;
       const user_access = access?.access;
-      console.log("user_accessuser_accessuser_access", user_access)
+      console.log("user_accessuser_accessuser_access", user_access);
       if (division) {
         if (user_access) {
           return response.status(200).json({
             success: true,
             error: false,
-            message: 'Login successful',
+            message: "Login successful",
             userType: type,
             logged_id: logged_id,
             user: true,
@@ -1227,7 +1218,7 @@ const userLogin = async (request, response) => {
           return response.status(200).json({
             success: true,
             error: false,
-            message: 'Login successful',
+            message: "Login successful",
             userType: type,
             user: true,
             logged_id: logged_id,
@@ -1240,7 +1231,7 @@ const userLogin = async (request, response) => {
         return response.status(200).json({
           success: true,
           error: false,
-          message: 'Login successful',
+          message: "Login successful",
           userType: type,
           logged_id: logged_id,
           refreshToken,
@@ -1249,18 +1240,17 @@ const userLogin = async (request, response) => {
       }
     });
   } catch (error) {
-    console.log('errr', error);
+    console.log("errr", error);
     logger.error(`Internal server error: ${error.message} in userLogin api`);
     return response.status(500).json({
       error: true,
       success: false,
-      message: 'Internal Server Error!',
+      message: "Internal Server Error!",
     });
-  }finally {
+  } finally {
     await prisma.$disconnect();
   }
 };
-
 
 /* user login ---------------------------------------------frgtpwd */
 const forgotPwd = async (request, response) => {
@@ -1269,12 +1259,12 @@ const forgotPwd = async (request, response) => {
     if (email) {
       const user = await prisma.users.findFirst({
         where: {
-          email: email
+          email: email,
         },
         select: {
           user_name: true,
-          user_id: true
-        }
+          user_id: true,
+        },
       });
 
       if (!user) {
@@ -1291,11 +1281,11 @@ const forgotPwd = async (request, response) => {
         const hashedOtp = await bcrypt.hash(otp, 5);
         await prisma.users.update({
           where: {
-            user_name: user.user_name
+            user_name: user.user_name,
           },
           data: {
-            temp_otp: hashedOtp
-          }
+            temp_otp: hashedOtp,
+          },
         });
 
         // Mailing section
@@ -1304,7 +1294,7 @@ const forgotPwd = async (request, response) => {
           port: 465,
           auth: {
             user: process.env.EMAIL_USER,
-            pass: process.env.EMAIL_PASSWORD
+            pass: process.env.EMAIL_PASSWORD,
           },
           secure: true,
           tls: {
@@ -1331,23 +1321,23 @@ const forgotPwd = async (request, response) => {
         };
         transporter.sendMail(mailOptions, function (err, info) {
           if (err) {
-            return
+            return;
           }
           response.status(201).json({
             success: true,
             error: false,
             message: "OTP sent successfully",
-            data: user.user_id
+            data: user.user_id,
           });
         });
       }
     } else {
-      logger.error(`email is undefined in forgotPwd `)
+      logger.error(`email is undefined in forgotPwd `);
     }
   } catch (error) {
     logger.error(`Internal server error: ${error.message} in forgotPwd api`);
     response.send(error);
-  }finally {
+  } finally {
     await prisma.$disconnect();
   }
 };
@@ -1357,7 +1347,7 @@ const otpLogin = async (request, response) => {
   const { email, otp } = request.body;
 
   if (!email || !otp) {
-    logger.error(`email or otp field is empty in otpLogin api`)
+    logger.error(`email or otp field is empty in otpLogin api`);
     response.status(400).json({
       error: true,
       message: "email or otp field is empty",
@@ -1367,17 +1357,17 @@ const otpLogin = async (request, response) => {
   try {
     const user = await prisma.users.findFirst({
       where: {
-        email: email
+        email: email,
       },
       select: {
-        temp_otp: true
-      }
+        temp_otp: true,
+      },
     });
 
     if (!user) {
       response.status(400).json({
         error: true,
-        message: "no user found!"
+        message: "no user found!",
       });
     } else {
       const dbOtp = user.temp_otp;
@@ -1386,12 +1376,12 @@ const otpLogin = async (request, response) => {
         logger.error(`otp is not matching -in otpLogin api`);
         response.status(401).json({
           error: true,
-          message: "otp is not matching!"
+          message: "otp is not matching!",
         });
       } else {
         response.status(200).json({
           success: true,
-          message: "Login successful"
+          message: "Login successful",
         });
       }
     }
@@ -1399,9 +1389,9 @@ const otpLogin = async (request, response) => {
     logger.error(`Internal server error: ${error.message} in otpLogin api`);
     response.status(500).json({
       error: true,
-      msg: "Internal server error"
+      msg: "Internal server error",
     });
-  }finally {
+  } finally {
     await prisma.$disconnect();
   }
 };
@@ -1439,7 +1429,7 @@ const resetPwd = async (request, response) => {
       msg: "Internal server error",
     });
     logger.error(`Internal server error: ${error.message} in resetPwd api`);
-  }finally {
+  } finally {
     await prisma.$disconnect();
   }
 };
@@ -1451,9 +1441,9 @@ const userProfile = async (request, response) => {
       const user = await prisma.users.findFirst({
         where: {
           user_id: {
-            equals: u_id
-          }
-        }
+            equals: u_id,
+          },
+        },
       });
 
       if (user) {
@@ -1471,7 +1461,7 @@ const userProfile = async (request, response) => {
         });
       }
     } else {
-      logger.error("user_id is undefined in userProfile api")
+      logger.error("user_id is undefined in userProfile api");
     }
   } catch (error) {
     logger.error(`Internal server error: ${error.message} in userProfile api`);
@@ -1479,7 +1469,7 @@ const userProfile = async (request, response) => {
       error: true,
       message: "Internal Server Error!",
     });
-  }finally {
+  } finally {
     await prisma.$disconnect();
   }
 };
@@ -1525,7 +1515,7 @@ const editUser = async (request, response) => {
         }
       }
     } else {
-      logger.error("user_id is undefined in editUser api")
+      logger.error("user_id is undefined in editUser api");
     }
   } catch (error) {
     logger.error(`Internal server error: ${error.message} in editUser api`);
@@ -1534,7 +1524,7 @@ const editUser = async (request, response) => {
       success: false,
       message: "Internal Server Error!",
     });
-  }finally {
+  } finally {
     await prisma.$disconnect();
   }
 };
@@ -1542,9 +1532,10 @@ const editUser = async (request, response) => {
 const supplieredit = async (request, response) => {
   console.log("reee", request.body);
   const u_id = request.params.id;
-  const { prod_type, website, address, account_number, ifsc_code } = request.body;
-  const landline = request.body.landline
-  const mobile = request.body.mobile
+  const { prod_type, website, address, account_number, ifsc_code } =
+    request.body;
+  const landline = request.body.landline;
+  const mobile = request.body.mobile;
 
   if (!prod_type || !landline || !mobile || !address) {
     response.status(400).json({
@@ -1573,8 +1564,8 @@ const supplieredit = async (request, response) => {
           select: {
             bank__details: {
               account_number: account_number,
-              ifsc_code: ifsc_code
-            }
+              ifsc_code: ifsc_code,
+            },
           },
           data: {
             product_type: prod_type,
@@ -1594,9 +1585,8 @@ const supplieredit = async (request, response) => {
           });
         }
       }
-    }
-    else {
-      logger.error("user_id is undefined in supplieredit api")
+    } else {
+      logger.error("user_id is undefined in supplieredit api");
     }
   } catch (error) {
     logger.error(`Internal server error: ${error.message} in supplieredit api`);
@@ -1605,10 +1595,10 @@ const supplieredit = async (request, response) => {
       success: false,
       message: "Internal Server Error!",
     });
-  }finally {
+  } finally {
     await prisma.$disconnect();
   }
-}
+};
 
 ///////////////bank_detailss---add/////////////////////
 const bankdetailsadd = async (request, response) => {
@@ -1616,7 +1606,7 @@ const bankdetailsadd = async (request, response) => {
   const { account_number, account_type, ifsc_code } = request.body;
 
   if (!account_number || !account_type || !ifsc_code) {
-    logger.error("All fields are required in bankdetailsadd api")
+    logger.error("All fields are required in bankdetailsadd api");
     throw new Error("All fields are required");
   }
 
@@ -1637,8 +1627,7 @@ const bankdetailsadd = async (request, response) => {
             user_id: u_id,
             account_number: account_number,
             account_type: account_type,
-            ifsc_code: ifsc_code
-
+            ifsc_code: ifsc_code,
           },
         });
 
@@ -1650,9 +1639,8 @@ const bankdetailsadd = async (request, response) => {
           });
         }
       }
-    }
-    else {
-      logger.error("user_id is undefined in bankdetailsadd api")
+    } else {
+      logger.error("user_id is undefined in bankdetailsadd api");
     }
   } catch (error) {
     response.status(500).json({
@@ -1660,20 +1648,22 @@ const bankdetailsadd = async (request, response) => {
       success: false,
       message: "Internal Server Error!",
     });
-    logger.error(`Internal server error: ${error.message} in bankdetailsadd api`);
-  }finally {
+    logger.error(
+      `Internal server error: ${error.message} in bankdetailsadd api`
+    );
+  } finally {
     await prisma.$disconnect();
   }
-}
+};
 
 const Users = async (request, response) => {
-  const usertype = request.user.userType
+  const usertype = request.user.userType;
   try {
     if (usertype === "ADM" || usertype === "SU") {
       const viewuser = await prisma.users.findMany({
         orderBy: {
-          id: "desc"
-        }
+          id: "desc",
+        },
       });
       response.status(201).json(viewuser);
     } else {
@@ -1685,24 +1675,24 @@ const Users = async (request, response) => {
   } catch (error) {
     logger.error(`Internal server error: ${error.message} in Users api`);
     response.status(500).json(error.message);
-  }finally {
+  } finally {
     await prisma.$disconnect();
   }
 };
 
 const Customers_view = async (request, response) => {
-  console.log("first")
-  const usertype = request.user.userType
+  console.log("first");
+  const usertype = request.user.userType;
   try {
     if (usertype === "ADM" || usertype === "SU") {
-      const user_type = "CUS"
+      const user_type = "CUS";
       const viewuser = await prisma.users.findMany({
         where: {
-          user_type: user_type
+          user_type: user_type,
         },
         orderBy: {
-          id: "desc"
-        }
+          id: "desc",
+        },
       });
       response.status(201).json(viewuser);
     } else {
@@ -1711,30 +1701,31 @@ const Customers_view = async (request, response) => {
         .status(403)
         .json({ message: "Unauthorized. You are not an admin" });
     }
-
   } catch (error) {
-    logger.error(`Internal server error: ${error.message} in Customers_view api`);
+    logger.error(
+      `Internal server error: ${error.message} in Customers_view api`
+    );
     response.status(500).json(error.message);
-  }finally {
+  } finally {
     await prisma.$disconnect();
   }
 };
 
 const users_types = async (request, response) => {
-  const usertype = request.user.userType
+  const usertype = request.user.userType;
   try {
     if (usertype === "ADM" || usertype === "SU") {
       const types = await prisma.users.findMany({
         where: {
-          is_active: "Y"
+          is_active: "Y",
         },
         select: {
           user_type: true,
           user_id: true,
         },
         orderBy: {
-          id: "desc"
-        }
+          id: "desc",
+        },
       });
 
       const groupedTypes = types.reduce((acc, user) => {
@@ -1752,21 +1743,45 @@ const users_types = async (request, response) => {
 
         return acc;
       }, {});
-      response.status(200).json(groupedTypes)
-
+      response.status(200).json(groupedTypes);
     } else {
       logger.error(`Unauthorized- in Customers_view api`);
       return response
         .status(403)
         .json({ message: "Unauthorized. You are not an admin" });
     }
-
   } catch (error) {
     logger.error(`Internal server error: ${error.message} in users_types api`);
     response.status(500).json(error.message);
-  }finally {
+  } finally {
     await prisma.$disconnect();
   }
-}
+};
 
-module.exports = { addadmin, superadmin, approveUsersList, viewSuppliers, userDetails, userApproval, viewUserDetails, updateuser, addUsers, getSingleDataById, supplierCodes, userFeedback, userProfile, deleteuser, userApprovalbyID, userLogin, forgotPwd, otpLogin, resetPwd, editUser, supplieredit, bankdetailsadd, Users, Customers_view, users_types }
+module.exports = {
+  addadmin,
+  superadmin,
+  approveUsersList,
+  viewSuppliers,
+  userDetails,
+  userApproval,
+  viewUserDetails,
+  updateuser,
+  addUsers,
+  getSingleDataById,
+  supplierCodes,
+  userFeedback,
+  userProfile,
+  deleteuser,
+  userApprovalbyID,
+  userLogin,
+  forgotPwd,
+  otpLogin,
+  resetPwd,
+  editUser,
+  supplieredit,
+  bankdetailsadd,
+  Users,
+  Customers_view,
+  users_types,
+};
