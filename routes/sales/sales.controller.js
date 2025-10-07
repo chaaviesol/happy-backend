@@ -998,6 +998,7 @@ const quoted_details = async (request, response) => {
           sales_id: true,
           so_number: true,
           so_notes: true,
+          remarks:true,
           discount: true,
           users: {
             select: {
@@ -1011,6 +1012,7 @@ const quoted_details = async (request, response) => {
       productDataArray.push({
         so_number: sales_orders.so_number,
         so_notes: sales_orders.so_notes,
+        remarks:sales_orders.remarks,
         user_id: sales_orders.users.user_id,
         user_name: sales_orders.users.user_name,
         sales_id: sales_orders.sales_id,
