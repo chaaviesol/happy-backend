@@ -688,6 +688,8 @@ const viewaccessories = async (request, response) => {
 const productsale_list = async (request, response) => {
   try {
     const division = request.body.division;
+    console.log("aa division",division);
+    
     if (!division) {
       const prodlist = await prisma.inventory.findMany({
         where: {
