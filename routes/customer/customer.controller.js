@@ -467,7 +467,9 @@ const profile = async (req, res) => {
       usertype === "ADM" ||
       usertype === "SUP"
     ) {
-      const logged_id = req.user.id;
+      // const logged_id = req.user.id;
+      const logged_id = req.body.logged_id; // instead of req.user.id
+
       if (logged_id) {
         const profiledata = await prisma.users.findFirst({
           where: {
