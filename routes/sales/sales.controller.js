@@ -526,25 +526,97 @@ const salesOrders = async (request, response) => {
   }
 };
 
+// const viewcustomers = async (request, response) => {
+//   const usertype = "CUS";
+//   try {
+//     const customer = await prisma.users.findMany({
+//       where: {
+//         user_type: usertype,
+//         is_approved: "Y",
+//       },
+//       select: {
+//         trade_name: true,
+//         user_name: true,
+//         mobile: true,
+//         id: true,
+       
+//       },
+//     });
+    
+   
+//     //  const customerNames = customer.map((item) => item.trade_name);
+//     //     const uniqueCustomerNamesSet = new Set(customerNames);
+//     //     const uniqueCustomerNames = [...uniqueCustomerNamesSet];
+//     //     const respText = {uniqueCustomerNames };
+//     response.status(201).json(customer);
+//   } catch (error) {
+//     logger.error(`An error occurred: ${error.message} in viewcustomers api`);
+//     response.status(500).json({ error: "Internal server error" });
+//   } finally {
+//     await prisma.$disconnect();
+//   }
+// };
+
 const viewcustomers = async (request, response) => {
   const usertype = "CUS";
   try {
-    const customer = await prisma.users.findMany({
+    // 1️⃣ Fetch all approved customers with their sales orders and payments
+    const customers = await prisma.users.findMany({
       where: {
         user_type: usertype,
         is_approved: "Y",
       },
       select: {
+        id: true,
         trade_name: true,
         user_name: true,
-        id: true,
+        mobile: true,
+        sales_order_new: {
+          select: {
+            sales_id: true,
+            total_amount: true,
+            so_payment: {
+              select: {
+                amount: true,
+              },
+            },
+          },
+        },
       },
     });
-    //  const customerNames = customer.map((item) => item.trade_name);
-    //     const uniqueCustomerNamesSet = new Set(customerNames);
-    //     const uniqueCustomerNames = [...uniqueCustomerNamesSet];
-    //     const respText = {uniqueCustomerNames };
-    response.status(201).json(customer);
+
+    // 2️⃣ Compute totals for each customer
+    const result = customers.map((cust) => {
+      const orders = cust.sales_order_new || [];
+
+      const totalAmount = orders.reduce(
+        (sum, o) => sum + parseFloat(o.total_amount || 0),
+        0
+      );
+
+      const paidAmount = orders.reduce((sum, o) => {
+        const payments = o.so_payment || [];
+        const totalPaid = payments.reduce(
+          (pSum, pay) => pSum + parseFloat(pay.amount || 0),
+          0
+        );
+        return sum + totalPaid;
+      }, 0);
+
+      const outstanding = totalAmount - paidAmount;
+
+      return {
+        id: cust.id,
+        trade_name: cust.trade_name,
+        user_name: cust.user_name,
+        mobile: cust.mobile,
+        total_amount: totalAmount.toFixed(2),
+        paid_amount: paidAmount.toFixed(2),
+        outstanding_amount: outstanding.toFixed(2),
+      };
+    });
+
+    response.status(200).json(result);
   } catch (error) {
     logger.error(`An error occurred: ${error.message} in viewcustomers api`);
     response.status(500).json({ error: "Internal server error" });
@@ -552,6 +624,9 @@ const viewcustomers = async (request, response) => {
     await prisma.$disconnect();
   }
 };
+
+
+
 
 ////////////////accessories--view////////////
 
@@ -998,7 +1073,7 @@ const quoted_details = async (request, response) => {
           sales_id: true,
           so_number: true,
           so_notes: true,
-          remarks:true,
+          remarks: true,
           discount: true,
           users: {
             select: {
@@ -1012,11 +1087,11 @@ const quoted_details = async (request, response) => {
       productDataArray.push({
         so_number: sales_orders.so_number,
         so_notes: sales_orders.so_notes,
-        remarks:sales_orders.remarks,
+        remarks: sales_orders.remarks,
         user_id: sales_orders.users.user_id,
         user_name: sales_orders.users.user_name,
         sales_id: sales_orders.sales_id,
-        discount: sales_orders?.discount , //changed from just discount to this format
+        discount: sales_orders?.discount, //changed from just discount to this format
       });
 
       const sales_list = await prisma.sales_list.findMany({
@@ -2599,6 +2674,10 @@ const update_salesorder = async (request, response) => {
     await prisma.$disconnect();
   }
 };
+
+
+
+
 
 module.exports = {
   newsalesOrder,

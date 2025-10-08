@@ -1758,6 +1758,171 @@ const users_types = async (request, response) => {
   }
 };
 
+const customertransaction = async (req, res) => {
+
+  const usertype = req.body.user_type;
+  const userid = req.body.user_id;
+
+  try {
+    let userData;
+    let transactions = [];
+
+    if (usertype === "CUS") {
+      // 🧾 Fetch customer details with sales orders and payments
+      userData = await prisma.users.findFirst({
+        where: { id: userid },
+        select: {
+          id: true,
+          trade_name: true,
+          user_name: true,
+          mobile: true,
+          sales_order_new: {
+            select: {
+              sales_id: true,
+              so_number: true,
+              total_amount: true,
+              created_date: true,
+              so_payment: {
+                select: {
+                  payment_id: true,
+                  amount: true,
+                  created_date: true,
+                },
+              },
+            },
+          },
+        },
+      });
+
+      const orders = userData.sales_order_new || [];
+
+      // 📊 Convert string amounts to numbers before summation
+      const totalAmount = orders.reduce(
+        (sum, o) => sum + parseFloat(o.total_amount || 0),
+        0
+      );
+
+      const paidAmount = orders.reduce((sum, o) => {
+        const payments = o.so_payment || [];
+        const totalPaid = payments.reduce(
+          (pSum, pay) => pSum + parseFloat(pay.amount || 0),
+          0
+        );
+        return sum + totalPaid;
+      }, 0);
+
+      const outstanding = totalAmount - paidAmount;
+
+      // 🧾 Prepare transaction history
+      transactions = orders.map((o) => ({
+        order_id: o.sales_id,
+        order_number: o.so_number,
+        order_date: o.created_date,
+        total_amount: parseFloat(o.total_amount || 0),
+        payments: o.so_payment.map((p) => ({
+          payment_id: p.payment_id,
+          payment_amount: parseFloat(p.amount || 0),
+          payment_date: p.created_date,
+        })),
+      }));
+
+      res.status(200).json({
+        user: {
+          id: userData.id,
+          trade_name: userData.trade_name,
+          user_name: userData.user_name,
+          mobile: userData.mobile,
+        },
+        total_amount: totalAmount,
+        paid_amount: paidAmount,
+        outstanding_amount: outstanding,
+        transactions,
+      });
+    } 
+    
+    else if (usertype === "SUP") {
+      // 🧾 Fetch supplier details with purchase orders and payments
+      userData = await prisma.users.findFirst({
+        where: { id: userid },
+        select: {
+          id: true,
+          trade_name: true,
+          user_name: true,
+          mobile: true,
+          purchase_order: {
+            select: {
+              po_id: true,
+              po_number: true,
+              total_amount: true,
+              created_date: true,
+              po_payment: {
+                select: {
+                  payment_id: true,
+                  amount: true,
+                  created_date: true,
+                },
+              },
+            },
+          },
+        },
+      });
+
+      const orders = userData.purchase_order || [];
+
+      const totalAmount = orders.reduce(
+        (sum, o) => sum + parseFloat(o.total_amount || 0),
+        0
+      );
+
+      const paidAmount = orders.reduce((sum, o) => {
+        const payments = o.po_payment || [];
+        const totalPaid = payments.reduce(
+          (pSum, pay) => pSum + parseFloat(pay.amount || 0),
+          0
+        );
+        return sum + totalPaid;
+      }, 0);
+
+      const outstanding = totalAmount - paidAmount;
+
+      transactions = orders.map((o) => ({
+        order_id: o.po_id,
+        order_number: o.po_number,
+        order_date: o.created_date,
+        total_amount: parseFloat(o.total_amount || 0),
+        payments: o.po_payment.map((p) => ({
+          payment_id: p.payment_id,
+          payment_amount: parseFloat(p.amount || 0),
+          payment_date: p.created_date,
+        })),
+      }));
+
+      res.status(200).json({
+        user: {
+          id: userData.id,
+          trade_name: userData.trade_name,
+          user_name: userData.user_name,
+          mobile: userData.mobile,
+        },
+        total_amount: totalAmount,
+        paid_amount: paidAmount,
+        outstanding_amount: outstanding,
+        transactions,
+      });
+    } 
+    
+    else {
+      res.status(400).json({ error: "Invalid user type" });
+    }
+  } catch (error) {
+    logger.error(`An error occurred: ${error.message} in customertransaction API`);
+    res.status(500).json({ error: "Internal server error" });
+  } finally {
+    await prisma.$disconnect();
+  }
+};
+
+
 module.exports = {
   addadmin,
   superadmin,
@@ -1784,4 +1949,5 @@ module.exports = {
   Users,
   Customers_view,
   users_types,
+  customertransaction
 };

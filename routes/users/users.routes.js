@@ -1,5 +1,5 @@
 const express = require("express");
-const { addadmin, approveUsersList, superadmin, viewSuppliers, userDetails, viewUserDetails, userApproval, updateuser, addUsers, getSingleDataById, supplierCodes, userFeedback, deleteuser, userApprovalbyID, userLogin, forgotPwd, otpLogin, resetPwd, userProfile, editUser, supplieredit, bankdetailsadd, Users, Customers_view, users_types } = require("./users.controller");
+const { addadmin, approveUsersList, superadmin, viewSuppliers, userDetails, viewUserDetails, userApproval, updateuser, addUsers, getSingleDataById, supplierCodes, userFeedback, deleteuser, userApprovalbyID, userLogin, forgotPwd, otpLogin, resetPwd, userProfile, editUser, supplieredit, bankdetailsadd, Users, Customers_view, users_types, customertransaction } = require("./users.controller");
 const auth = require('../../middleware/Auth/auth')
 const usersRoutes = express.Router()
 
@@ -37,5 +37,6 @@ usersRoutes.post('/viewusers', auth, Users)///////////n
 usersRoutes.post('/viewcustomers', auth, Customers_view)
 
 usersRoutes.get('/users_types', auth, users_types)
+usersRoutes.post("/transactionhistory",auth,customertransaction)
 
 module.exports = usersRoutes       
