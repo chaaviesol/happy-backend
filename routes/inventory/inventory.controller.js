@@ -68,6 +68,7 @@ const viewInventory = async (request, response) => {
             po_num: true,
             barcode: true,
             barcode_text: true,
+
             product_master: {
               select: {
                 product_id: true,
@@ -80,7 +81,8 @@ const viewInventory = async (request, response) => {
                 image2_link: true,
                 image3_link: true,
                 product_sub_type: true,
-                product_code:true,
+                product_code: true,
+                assign_code: true,
                 prod_subtype2: true,
                 brand: {
                   select: {
@@ -125,7 +127,8 @@ const viewInventory = async (request, response) => {
                 product_id: true,
                 product_name: true,
                 product_type: true,
-                product_code:true,
+                product_code: true,
+                assign_code: true,
                 color: true,
                 color_family: true,
                 min_stk: true,
@@ -154,7 +157,10 @@ const viewInventory = async (request, response) => {
             status: isOutOfStock ? "outofstock" : "instock",
           };
         });
-        console.log("🔍 Sample Inventory:", JSON.stringify(inventoryWithStatus[0], null, 2));
+        console.log(
+          "🔍 Sample Inventory:",
+          JSON.stringify(inventoryWithStatus[0], null, 2)
+        );
 
         response.status(200).json(inventoryWithStatus);
       }
@@ -169,9 +175,14 @@ const viewInventory = async (request, response) => {
     response.status(500).json({ error: "An error occurred" });
   } finally {
     const test = await prisma.product_master.findFirst({
-  select: { product_id: true, product_name: true, product_code: true },
-});
-console.log("product_master test:", test);
+      select: {
+        product_id: true,
+        product_name: true,
+        product_code: true,
+        assign_code: true,
+      },
+    });
+    console.log("product_master test:", test);
 
     await prisma.$disconnect();
   }
@@ -281,10 +292,11 @@ const generateBarcode = async (request, response) => {
       },
       select: {
         product_code: true,
+        assign_code: true,
         product_name: true,
       },
     });
-    const product_code = productfind.product_code;
+    const assign_code = productfind.assign_code;
     const product_name = productfind.product_name;
 
     if (findbarcode?.barcode && findbarcode?.barcode_text) {
@@ -371,10 +383,10 @@ const generateBarcode = async (request, response) => {
     ctx.fillText(barcodeText, labelWidth / 2, 120);
 
     // Product code at bottom
-    // if (product_code) {
+    // if (assign_code) {
     //   ctx.font = "bold 10px Arial";
     //   ctx.textAlign = "center";
-    //   wrapText(ctx, product_code, labelWidth / 2, 140, labelWidth - 20, 12);
+    //   wrapText(ctx, assign_code, labelWidth / 2, 140, labelWidth - 20, 12);
     // }
     function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
       const words = text.split(" ");
@@ -431,13 +443,12 @@ const scanBarcode = async (request, response) => {
     // Scanner sends decoded barcode text
     // Example: ?barcode=101-2024-55
     const { barcode } = request.query;
-    
-    
+
     if (!barcode) {
       return response.status(400).json({ error: "Barcode text is required" });
     }
-    
-    console.log("qq Barcode ",barcode);
+
+    console.log("qq Barcode ", barcode);
     // 1️⃣ Find product by barcode_text
     const product = await prisma.inventory.findFirst({
       where: {
@@ -472,11 +483,12 @@ const scanBarcode = async (request, response) => {
           product_type: true,
           product_name: true,
           color_family: true,
-          color:true,
+          color: true,
           package: true,
           no_of_items: true,
           gst_perc: true,
           product_code: true,
+          assign_code: true,
         },
       }),
       prisma.campaigns.findMany({
@@ -521,6 +533,7 @@ const scanBarcode = async (request, response) => {
       mrp: maxMrp._max.mrp,
       original_price: maxMrp._min.selling_price,
       product_code: productTypeResult?.product_code || null,
+      assign_code: productTypeResult?.assign_code || null,
       activeCampaigns,
       barcode_text: product.barcode_text,
       barcode_image: product.barcode, // S3 URL

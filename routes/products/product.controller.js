@@ -301,6 +301,7 @@ const productmgmt = async (request, response) => {
           color_family,
           usertype,
           min_stk,
+          assign_code,
         } = data;
 
         let product_desc = data.desc;
@@ -425,6 +426,7 @@ const productmgmt = async (request, response) => {
             data: {
               product_id: product_id,
               product_code: product_code,
+              assign_code: assign_code,
               product_name: name,
               product_desc: product_desc,
               product_type: type,
@@ -489,6 +491,7 @@ const productmgmt = async (request, response) => {
             color_family,
             p_flag,
             min_stk,
+            assign_code,
             brand_id,
           } = data;
 
@@ -609,6 +612,7 @@ const productmgmt = async (request, response) => {
                   color_family: color_family,
                   // images:images,
                   min_stk: parseInt(min_stk),
+                  assign_code: assign_code,
                 },
               });
               const responsepText = product_name + " updated successfully";

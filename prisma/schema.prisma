@@ -125,6 +125,7 @@ model product_master {
   prod_subtype2                                                                   String?                  @db.VarChar
   images                                                                          Json?                    @db.Json
   min_stk                                                                         Int?
+  assign_code                                                                     String?
   bl_goods_receipt                                                                bl_goods_receipt[]
   bl_inventory                                                                    bl_inventory[]
   bl_purchase_list                                                                bl_purchase_list[]
