@@ -57,6 +57,7 @@ const viewInventory = async (request, response) => {
         },
       });
       const division = divisiondata?.division;
+     
       if (!division && !is_black) {
         const inventory = await prisma.inventory.findMany({
           select: {
@@ -383,11 +384,11 @@ const generateBarcode = async (request, response) => {
     ctx.fillText(barcodeText, labelWidth / 2, 120);
 
     // Product code at bottom
-    // if (assign_code) {
-    //   ctx.font = "bold 10px Arial";
-    //   ctx.textAlign = "center";
-    //   wrapText(ctx, assign_code, labelWidth / 2, 140, labelWidth - 20, 12);
-    // }
+    if (assign_code) {
+      ctx.font = "bold 10px Arial";
+      ctx.textAlign = "center";
+      wrapText(ctx, assign_code, labelWidth / 2, 140, labelWidth - 20, 12);
+    }
     function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
       const words = text.split(" ");
       let line = "";
