@@ -449,11 +449,15 @@ const scanBarcode = async (request, response) => {
       return response.status(400).json({ error: "Barcode text is required" });
     }
 
-    console.log("qq Barcode ", barcode);
+    const cleanBarcode = barcode.trim();
+    console.log("qq Barcode ", cleanBarcode);
     // 1️⃣ Find product by barcode_text
     const product = await prisma.inventory.findFirst({
       where: {
-        barcode_text: barcode,
+          OR: [
+      { barcode_text: cleanBarcode },
+      { barcode: cleanBarcode },
+    ],
       },
       select: {
         INVENTORY_id: true,
