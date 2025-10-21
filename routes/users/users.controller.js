@@ -56,6 +56,7 @@ const addUsers = async (request, response) => {
       sup_code: sup_code,
       tradename: tradename,
       Tradeoption: Tradeoption,
+      grade :grade
     } = request.body;
     if (type && name && mob) {
       // Example usage:
@@ -162,6 +163,7 @@ const addUsers = async (request, response) => {
           trade_name: tradename,
           sup_code: sup_code,
           trade_option: Tradeoption,
+          grade:grade
         },
       });
 
@@ -213,6 +215,7 @@ const updateuser = async (request, response) => {
         landline,
         website,
         address,
+        grade
       } = request.body;
 
       try {
@@ -230,6 +233,7 @@ const updateuser = async (request, response) => {
             website: website,
             address: address,
             updated_date: istDate,
+            grade:grade
           },
         });
         const respText = user_name + " updated successfully";

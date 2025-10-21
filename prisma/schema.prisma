@@ -206,6 +206,7 @@ model users {
   sup_code           String?                  @db.VarChar
   temp_otp           String?                  @db.VarChar
   trade_option       String?                  @db.VarChar
+  grade              String?                  @db.VarChar
   adm_notification   adm_notification[]
   bank__details      bank__details[]
   bl_purchase_order  bl_purchase_order[]
