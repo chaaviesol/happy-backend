@@ -30,143 +30,257 @@ const logger = winston.createLogger({
   ],
 });
 
+// const viewInventory = async (request, response) => {
+//   console.log(request.user);
+//   // const division = request.user.division;
+//   const id = request.user.id;
+//   const usertype = request.user.userType;
+//   const is_black = request.body.is_black;
+//   const { type, subCategory, category } = request.body;
+
+//   try {
+//     if (usertype === "ADM" || usertype === "SU") {
+//       const usersdata = await prisma.users.findFirst({
+//         where: {
+//           id: id,
+//         },
+//         select: {
+//           user_id: true,
+//         },
+//       });
+
+//       const divisiondata = await prisma.staff_users.findFirst({
+//         where: {
+//           user_id: usersdata?.user_id,
+//         },
+//         select: {
+//           division: true,
+//         },
+//       });
+//       const division = divisiondata?.division;
+
+//       if (!division && !is_black) {
+//         const inventory = await prisma.inventory.findMany({
+//           select: {
+//             INVENTORY_id: true,
+//             batch_id: true,
+//             total_quantity: true,
+//             blocked_quantity: true,
+//             mrp: true,
+//             po_num: true,
+//             barcode: true,
+//             barcode_text: true,
+
+//             product_master: {
+//               select: {
+//                 product_id: true,
+//                 product_name: true,
+//                 product_type: true,
+//                 color: true,
+//                 color_family: true,
+//                 min_stk: true,
+//                 image1_link: true,
+//                 image2_link: true,
+//                 image3_link: true,
+//                 product_sub_type: true,
+//                 product_code: true,
+//                 assign_code: true,
+//                 prod_subtype2: true,
+//                 brand: {
+//                   select: {
+//                     brand_name: true,
+//                   },
+//                 },
+//               },
+//             },
+//           },
+//           orderBy: {
+//             INVENTORY_id: "desc",
+//           },
+//         });
+
+//         const inventoryWithStatus = inventory.map((item) => {
+//           const isOutOfStock =
+//             item?.total_quantity <= item.product_master?.min_stk;
+//           return {
+//             ...item,
+//             status: isOutOfStock ? "outofstock" : "instock",
+//           };
+//         });
+//         response.status(200).json(inventoryWithStatus);
+//       } else if (division && !is_black) {
+//         const inventory = await prisma.inventory.findMany({
+//           where: {
+//             product_master: {
+//               product_type: division,
+//             },
+//           },
+//           select: {
+//             INVENTORY_id: true,
+//             batch_id: true,
+//             total_quantity: true,
+//             blocked_quantity: true,
+//             mrp: true,
+//             po_num: true,
+//             barcode: true,
+//             barcode_text: true,
+//             product_master: {
+//               select: {
+//                 product_id: true,
+//                 product_name: true,
+//                 product_type: true,
+//                 product_code: true,
+//                 assign_code: true,
+//                 color: true,
+//                 color_family: true,
+//                 min_stk: true,
+//                 image1_link: true,
+//                 image2_link: true,
+//                 image3_link: true,
+//                 product_sub_type: true,
+//                 prod_subtype2: true,
+//                 brand: {
+//                   select: {
+//                     brand_name: true,
+//                   },
+//                 },
+//               },
+//             },
+//           },
+//           orderBy: {
+//             INVENTORY_id: "desc",
+//           },
+//         });
+//         const inventoryWithStatus = inventory.map((item) => {
+//           const isOutOfStock =
+//             item.total_quantity <= item.product_master.min_stk;
+//           return {
+//             ...item,
+//             status: isOutOfStock ? "outofstock" : "instock",
+//           };
+//         });
+//         console.log(
+//           "🔍 Sample Inventory:",
+//           JSON.stringify(inventoryWithStatus[0], null, 2)
+//         );
+
+//         response.status(200).json(inventoryWithStatus);
+//       }
+//     } else {
+//       logger.error(`Unauthorized- in inventory api`);
+//       return response
+//         .status(403)
+//         .json({ message: "Unauthorized. You are not an admin" });
+//     }
+//   } catch (error) {
+//     logger.error(`An error occurred: ${error.message} in inventory api`);
+//     response.status(500).json({ error: "An error occurred" });
+//   } finally {
+//     const test = await prisma.product_master.findFirst({
+//       select: {
+//         product_id: true,
+//         product_name: true,
+//         product_code: true,
+//         assign_code: true,
+//       },
+//     });
+//     console.log("product_master test:", test);
+
+//     await prisma.$disconnect();
+//   }
+// };
+
 const viewInventory = async (request, response) => {
-  console.log(request.user);
-  // const division = request.user.division;
   const id = request.user.id;
   const usertype = request.user.userType;
   const is_black = request.body.is_black;
+  const { type, subCategory, category } = request.body;
 
   try {
     if (usertype === "ADM" || usertype === "SU") {
       const usersdata = await prisma.users.findFirst({
-        where: {
-          id: id,
-        },
-        select: {
-          user_id: true,
-        },
+        where: { id },
+        select: { user_id: true },
       });
 
       const divisiondata = await prisma.staff_users.findFirst({
-        where: {
-          user_id: usersdata?.user_id,
-        },
-        select: {
-          division: true,
-        },
+        where: { user_id: usersdata?.user_id },
+        select: { division: true },
       });
+
       const division = divisiondata?.division;
-     
-      if (!division && !is_black) {
-        const inventory = await prisma.inventory.findMany({
-          select: {
-            INVENTORY_id: true,
-            batch_id: true,
-            total_quantity: true,
-            blocked_quantity: true,
-            mrp: true,
-            po_num: true,
-            barcode: true,
-            barcode_text: true,
 
-            product_master: {
-              select: {
-                product_id: true,
-                product_name: true,
-                product_type: true,
-                color: true,
-                color_family: true,
-                min_stk: true,
-                image1_link: true,
-                image2_link: true,
-                image3_link: true,
-                product_sub_type: true,
-                product_code: true,
-                assign_code: true,
-                prod_subtype2: true,
-                brand: {
-                  select: {
-                    brand_name: true,
-                  },
-                },
+      // ✅ Build filters based on corrected mapping
+      const productFilter = {};
+
+      if (type && type.trim() !== "")
+        productFilter.product_type = { equals: type, mode: "insensitive" };
+
+      if (category && category.trim() !== "")
+        productFilter.product_sub_type = {
+          equals: category,
+          mode: "insensitive",
+        };
+
+      if (subCategory && subCategory.trim() !== "")
+        productFilter.prod_subtype2 = {
+          equals: subCategory,
+          mode: "insensitive",
+        };
+
+      if (division && !is_black)
+        productFilter.product_type = { equals: division, mode: "insensitive" };
+
+      // 🔍 Fetch inventory based on conditions
+      const inventory = await prisma.inventory.findMany({
+        where: Object.keys(productFilter).length
+          ? { product_master: productFilter }
+          : undefined,
+        select: {
+          INVENTORY_id: true,
+          batch_id: true,
+          total_quantity: true,
+          blocked_quantity: true,
+          mrp: true,
+          po_num: true,
+          barcode: true,
+          barcode_text: true,
+          product_master: {
+            select: {
+              product_id: true,
+              product_name: true,
+              product_type: true,
+              product_sub_type: true,
+              prod_subtype2: true,
+              product_code: true,
+              assign_code: true,
+              color: true,
+              color_family: true,
+              min_stk: true,
+              image1_link: true,
+              image2_link: true,
+              image3_link: true,
+              brand: {
+                select: { brand_name: true },
               },
             },
           },
-          orderBy: {
-            INVENTORY_id: "desc",
-          },
-        });
+        },
+        orderBy: { INVENTORY_id: "desc" },
+      });
 
-        const inventoryWithStatus = inventory.map((item) => {
-          const isOutOfStock =
-            item?.total_quantity <= item.product_master?.min_stk;
-          return {
-            ...item,
-            status: isOutOfStock ? "outofstock" : "instock",
-          };
-        });
-        response.status(200).json(inventoryWithStatus);
-      } else if (division && !is_black) {
-        const inventory = await prisma.inventory.findMany({
-          where: {
-            product_master: {
-              product_type: division,
-            },
-          },
-          select: {
-            INVENTORY_id: true,
-            batch_id: true,
-            total_quantity: true,
-            blocked_quantity: true,
-            mrp: true,
-            po_num: true,
-            barcode: true,
-            barcode_text: true,
-            product_master: {
-              select: {
-                product_id: true,
-                product_name: true,
-                product_type: true,
-                product_code: true,
-                assign_code: true,
-                color: true,
-                color_family: true,
-                min_stk: true,
-                image1_link: true,
-                image2_link: true,
-                image3_link: true,
-                product_sub_type: true,
-                prod_subtype2: true,
-                brand: {
-                  select: {
-                    brand_name: true,
-                  },
-                },
-              },
-            },
-          },
-          orderBy: {
-            INVENTORY_id: "desc",
-          },
-        });
-        const inventoryWithStatus = inventory.map((item) => {
-          const isOutOfStock =
-            item.total_quantity <= item.product_master.min_stk;
-          return {
-            ...item,
-            status: isOutOfStock ? "outofstock" : "instock",
-          };
-        });
-        console.log(
-          "🔍 Sample Inventory:",
-          JSON.stringify(inventoryWithStatus[0], null, 2)
-        );
+      // 🧮 Add stock status
+      const inventoryWithStatus = inventory.map((item) => ({
+        ...item,
+        status:
+          item.total_quantity <= (item.product_master?.min_stk || 0)
+            ? "outofstock"
+            : "instock",
+      }));
 
-        response.status(200).json(inventoryWithStatus);
-      }
+      return response.status(200).json(inventoryWithStatus);
     } else {
-      logger.error(`Unauthorized- in inventory api`);
+      logger.error(`Unauthorized - in inventory api`);
       return response
         .status(403)
         .json({ message: "Unauthorized. You are not an admin" });
@@ -175,19 +289,11 @@ const viewInventory = async (request, response) => {
     logger.error(`An error occurred: ${error.message} in inventory api`);
     response.status(500).json({ error: "An error occurred" });
   } finally {
-    const test = await prisma.product_master.findFirst({
-      select: {
-        product_id: true,
-        product_name: true,
-        product_code: true,
-        assign_code: true,
-      },
-    });
-    console.log("product_master test:", test);
-
     await prisma.$disconnect();
   }
 };
+
+
 
 // const generateBarcode = async (request, response) => {
 //   // const id = request.user.id;
@@ -454,10 +560,7 @@ const scanBarcode = async (request, response) => {
     // 1️⃣ Find product by barcode_text
     const product = await prisma.inventory.findFirst({
       where: {
-          OR: [
-      { barcode_text: cleanBarcode },
-      { barcode: cleanBarcode },
-    ],
+        OR: [{ barcode_text: cleanBarcode }, { barcode: cleanBarcode }],
       },
       select: {
         INVENTORY_id: true,
