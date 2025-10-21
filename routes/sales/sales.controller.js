@@ -539,11 +539,10 @@ const salesOrders = async (request, response) => {
 //         user_name: true,
 //         mobile: true,
 //         id: true,
-       
+
 //       },
 //     });
-    
-   
+
 //     //  const customerNames = customer.map((item) => item.trade_name);
 //     //     const uniqueCustomerNamesSet = new Set(customerNames);
 //     //     const uniqueCustomerNames = [...uniqueCustomerNamesSet];
@@ -571,6 +570,7 @@ const viewcustomers = async (request, response) => {
         trade_name: true,
         user_name: true,
         mobile: true,
+        grade: true,
         sales_order_new: {
           select: {
             sales_id: true,
@@ -610,6 +610,7 @@ const viewcustomers = async (request, response) => {
         trade_name: cust.trade_name,
         user_name: cust.user_name,
         mobile: cust.mobile,
+        grade: cust.grade,
         total_amount: totalAmount.toFixed(2),
         paid_amount: paidAmount.toFixed(2),
         outstanding_amount: outstanding.toFixed(2),
@@ -624,9 +625,6 @@ const viewcustomers = async (request, response) => {
     await prisma.$disconnect();
   }
 };
-
-
-
 
 ////////////////accessories--view////////////
 
@@ -688,8 +686,8 @@ const viewaccessories = async (request, response) => {
 const productsale_list = async (request, response) => {
   try {
     const division = request.body.division;
-    console.log("aa division",division);
-    
+    console.log("aa division", division);
+
     if (!division) {
       const prodlist = await prisma.inventory.findMany({
         where: {
@@ -2676,10 +2674,6 @@ const update_salesorder = async (request, response) => {
     await prisma.$disconnect();
   }
 };
-
-
-
-
 
 module.exports = {
   newsalesOrder,
