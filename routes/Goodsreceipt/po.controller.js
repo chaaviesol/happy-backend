@@ -1,24 +1,27 @@
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
-const winston = require('winston');
-const fs = require('fs');
+const winston = require("winston");
+const fs = require("fs");
 const { error } = require("console");
 
 // Create a logs directory if it doesn't exist
-const logDirectory = './logs';
+const logDirectory = "./logs";
 if (!fs.existsSync(logDirectory)) {
   fs.mkdirSync(logDirectory);
 }
 
 // Configure the Winston logger
 const logger = winston.createLogger({
-  level: 'info',
+  level: "info",
   format: winston.format.combine(
     winston.format.timestamp(),
     winston.format.json()
   ),
   transports: [
-    new winston.transports.File({ filename: `${logDirectory}/error.log`, level: 'error' }),
+    new winston.transports.File({
+      filename: `${logDirectory}/error.log`,
+      level: "error",
+    }),
     new winston.transports.File({ filename: `${logDirectory}/combined.log` }),
   ],
 });
@@ -26,8 +29,6 @@ const logger = winston.createLogger({
 const currentDate = new Date();
 const istOffset = 5 * 60 * 60 * 1000 + 30 * 60 * 1000;
 const istDate = new Date(currentDate.getTime() + istOffset);
-
-
 
 const goodsReceipt = async (req, res) => {
   console.log("requesttt", req.body);
@@ -39,7 +40,16 @@ const goodsReceipt = async (req, res) => {
   const u_date = istDate;
 
   if (usertype === "ADM" || usertype === "SU") {
-    if (!po_num || !received || received.length === 0 || !lr_num || !logistics_cost || !handling_cost || !modified_by || !type) {
+    if (
+      !po_num ||
+      !received ||
+      received.length === 0 ||
+      !lr_num ||
+      !logistics_cost ||
+      !handling_cost ||
+      !modified_by ||
+      !type
+    ) {
       res.status(400).json({
         error: true,
         message: "invalid body!!!",
@@ -59,7 +69,9 @@ const goodsReceipt = async (req, res) => {
 
         const updatePurchaseList = async () => {
           const update_Pl_Queries = purchaseList.map(async (val) => {
-            const matchedElem = received.find((item) => val.product_id === item.product_id);
+            const matchedElem = received.find(
+              (item) => val.product_id === item.product_id
+            );
             if (matchedElem) {
               const updatedRecQty = val.received_qty + matchedElem.received_qty;
               // if (updatedRecQty > val.order_qty) {
@@ -92,7 +104,9 @@ const goodsReceipt = async (req, res) => {
           throw new Error("Updated purchase list not found!");
         }
 
-        const isAllClosed = updatedPurchaseList.every((val) => val.order_qty === val.received_qty);
+        const isAllClosed = updatedPurchaseList.every(
+          (val) => val.order_qty === val.received_qty
+        );
         const status = isAllClosed ? "closed" : "receipt_wip";
 
         await prisma.purchase_order.updateMany({
@@ -187,20 +201,22 @@ const goodsReceipt = async (req, res) => {
           skipDuplicates: true,
         });
 
-        const insertInventoryQueries = inventory_data_arr.map((el) => prisma.inventory.create({
-          data: {
-            prod_id: el.prod_id,
-            batch_id: el.batch_id,
-            created_by: logged_id.toString(),
-            created_date: istDate,
-            po_num: po_num,
-            base_price: el.base_price,
-            selling_price: el.selling_price,
-            mrp: el.mrp,
-            charges: el.charges,
-            total_quantity: el.received_qty,
-          },
-        }));
+        const insertInventoryQueries = inventory_data_arr.map((el) =>
+          prisma.inventory.create({
+            data: {
+              prod_id: el.prod_id,
+              batch_id: el.batch_id,
+              created_by: logged_id.toString(),
+              created_date: istDate,
+              po_num: po_num,
+              base_price: el.base_price,
+              selling_price: el.selling_price,
+              mrp: el.mrp,
+              charges: el.charges,
+              total_quantity: el.received_qty,
+            },
+          })
+        );
 
         await Promise.all(insertInventoryQueries);
 
@@ -233,7 +249,7 @@ const goodsReceipt = async (req, res) => {
         error: true,
         message: "Transaction failed",
       });
-    }finally {
+    } finally {
       await prisma.$disconnect();
     }
   } else {
@@ -242,42 +258,161 @@ const goodsReceipt = async (req, res) => {
   }
 };
 
-
-
 const cancel_purchaseorder = async (request, response) => {
-  const usertype = request.user.userType
+  const usertype = request.user.userType;
   try {
     if (usertype === "ADM" || usertype === "SU") {
-      const po_num = request.body.po_num
-      const po_status = request.body.po_status
+      const po_num = request.body.po_num;
+      const po_status = request.body.po_status;
       const confirm = await prisma.purchase_order.update({
         where: {
-          po_number: po_num
+          po_number: po_num,
         },
         data: {
-          po_status: po_status
-        }
-      })
+          po_status: po_status,
+        },
+      });
       const respText = `purchase order ${po_status} successfully`;
       response.status(201).json({
         success: true,
         message: respText,
       });
-    }
-    else {
+    } else {
       logger.error(`Unauthorized- in cancel_purchaseorder api`);
       return response
         .status(403)
         .json({ message: "Unauthorized. You are not an admin" });
     }
-
-  }
-  catch (error) {
-    logger.error(`Error querying purchase list in cancel_purchaseorder api`)
-  }finally {
+  } catch (error) {
+    logger.error(`Error querying purchase list in cancel_purchaseorder api`);
+  } finally {
     await prisma.$disconnect();
   }
-}
+};
+
+const closed_purchasedetails = async (request, response) => {
+  const usertype = request.user.userType;
+
+  try {
+    if (usertype === "ADM" || usertype === "SU") {
+      const { po_number } = request.body;
+
+      // 1️⃣ Fetch purchase order
+      const purchaseOrder = await prisma.purchase_order.findFirst({
+        where: { po_number },
+      });
+
+      if (!purchaseOrder) {
+        return response.status(404).json({ message: "Purchase order not found" });
+      }
+
+      // 2️⃣ Fetch purchase list (product-level order details)
+      const purchaseList = await prisma.purchase_list.findMany({
+        where: { po_num: po_number },
+        include: { product_master: true },
+      });
+
+      // 3️⃣ Fetch goods receipts for this PO
+      const goodsReceipts = await prisma.goods_receipt.findMany({
+        where: { purchase_order: po_number },
+        include: {
+          product_master: true,
+        },
+      });
+
+      // 4️⃣ Fetch GR product list for this PO
+      const grIds = goodsReceipts.map((gr) => gr.goods_id);
+      const grProducts = await prisma.gr_product_list.findMany({
+        where: { gr_id: { in: grIds } },
+      });
+
+      // 5️⃣ Group goods_receipts by unique LR number
+      const lrMap = new Map();
+      for (const gr of goodsReceipts) {
+        if (!gr.lr_num) continue; // skip null LR
+
+        if (!lrMap.has(gr.lr_num)) {
+          lrMap.set(gr.lr_num, {
+            lr_num: gr.lr_num,
+            created_date: gr.created_date,
+            lr_no: gr.lr_no || null,
+            created_by: gr.created_by,
+            logistics_cost: Number(gr.charges?.logistics_cost || 0),
+            handling_cost: Number(gr.charges?.handling_cost || 0),
+          });
+        }
+      }
+
+      // 6️⃣ Calculate total logistics & handling charges (once per LR)
+      let totalLogisticsCost = 0;
+      let totalHandlingCost = 0;
+      const lrDetails = [];
+
+      for (const lr of lrMap.values()) {
+        totalLogisticsCost += lr.logistics_cost;
+        totalHandlingCost += lr.handling_cost;
+
+        lrDetails.push({
+          lr_num: lr.lr_num,
+          created_date: lr.created_date,
+          lr_no: lr.lr_no,
+          created_by: lr.created_by,
+        });
+      }
+
+      const totalCharges = totalLogisticsCost + totalHandlingCost;
+
+      // 7️⃣ Combine data product-wise
+      const products = purchaseList.map((pl) => {
+        const productId = pl.product_id;
+
+        const productGoodsReceipts = goodsReceipts.filter(
+          (gr) => gr.product_id === productId
+        );
+
+        const productGrProducts = grProducts.filter(
+          (grp) => grp.product_id === productId
+        );
+
+        return {
+          product_id: productId,
+          product_name: pl.product_master?.product_name || null,
+          order_details: pl,
+          goods_receipts: productGoodsReceipts,
+          gr_products: productGrProducts,
+        };
+      });
+
+      // 8️⃣ Final structured response
+      const result = {
+        success: true,
+        message: "Closed purchase details fetched successfully",
+        purchase_order: {
+          ...purchaseOrder,
+          total_logistics_cost: totalLogisticsCost,
+          total_handling_cost: totalHandlingCost,
+          total_charges: totalCharges,
+          products,
+          lr_details: lrDetails, // ✅ Unique LR list
+        },
+      };
+
+      return response.status(200).json(result);
+    } else {
+      logger.error(`Unauthorized - in closed_purchasedetails API`);
+      return response
+        .status(403)
+        .json({ message: "Unauthorized. You are not an admin" });
+    }
+  } catch (error) {
+    logger.error(
+      `Internal server error: ${error.message} in closed_purchasedetails API`
+    );
+    return response.status(500).json({ message: "Internal server error" });
+  } finally {
+    await prisma.$disconnect();
+  }
+};
 
 
-module.exports = { goodsReceipt, cancel_purchaseorder }
+module.exports = { goodsReceipt, cancel_purchaseorder, closed_purchasedetails };
