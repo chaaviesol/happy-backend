@@ -38,6 +38,28 @@ const currentDate = new Date();
 const istOffset = 5 * 60 * 60 * 1000 + 30 * 60 * 1000;
 const istDate = new Date(currentDate.getTime() + istOffset);
 
+const generateSupCode = async (name) => {
+  const getRandomLetter = () =>
+    String.fromCharCode(65 + Math.floor(Math.random() * 26)); // A-Z
+  const getRandomDigit = () => Math.floor(Math.random() * 10); // 0-9
+
+  let code;
+  let exists = true;
+
+  while (exists) {
+    code = name[0].toUpperCase() + getRandomLetter() + getRandomDigit();
+
+    const found = await prisma.users.findFirst({
+      where: { sup_code: code },
+      select: { id: true },
+    });
+
+    exists = !!found; // If found, try again
+  }
+
+  return code;
+};
+
 const addUsers = async (request, response) => {
   console.log("rttt", request.body);
   try {
@@ -56,7 +78,7 @@ const addUsers = async (request, response) => {
       sup_code: sup_code,
       tradename: tradename,
       Tradeoption: Tradeoption,
-      grade :grade
+      grade: grade,
     } = request.body;
     if (type && name && mob) {
       // Example usage:
@@ -105,6 +127,12 @@ const addUsers = async (request, response) => {
 
       const new_id = maxIdResult ? maxIdResult.id + 1 : 1;
       let user_type_upper = type.toUpperCase();
+      // Generate sup_code if null
+      let finalSupCode = sup_code;
+      if (!finalSupCode) {
+        finalSupCode = await generateSupCode(name);
+      }
+
       const recentUserResults = await prisma.users.findMany({
         select: {
           id: true,
@@ -161,14 +189,13 @@ const addUsers = async (request, response) => {
           gst_num: gst,
           is_user_flagged: u_flagged,
           trade_name: tradename,
-          sup_code: sup_code,
+          sup_code: finalSupCode,
           trade_option: Tradeoption,
-          grade:grade
+          grade: grade,
         },
       });
 
-      const respText =
-        "User with ID " + u_id + " is created";
+      const respText = "User with ID " + u_id + " is created";
       const notification = await prisma.adm_notification.create({
         data: {
           text: respText,
@@ -215,7 +242,7 @@ const updateuser = async (request, response) => {
         landline,
         website,
         address,
-        grade
+        grade,
       } = request.body;
 
       try {
@@ -233,7 +260,7 @@ const updateuser = async (request, response) => {
             website: website,
             address: address,
             updated_date: istDate,
-            grade:grade
+            grade: grade,
           },
         });
         const respText = user_name + " updated successfully";
@@ -1763,7 +1790,6 @@ const users_types = async (request, response) => {
 };
 
 const customertransaction = async (req, res) => {
-
   const usertype = req.body.user_type;
   const userid = req.body.user_id;
 
@@ -1842,9 +1868,7 @@ const customertransaction = async (req, res) => {
         outstanding_amount: outstanding,
         transactions,
       });
-    } 
-    
-    else if (usertype === "SUP") {
+    } else if (usertype === "SUP") {
       // 🧾 Fetch supplier details with purchase orders and payments
       userData = await prisma.users.findFirst({
         where: { id: userid },
@@ -1913,19 +1937,18 @@ const customertransaction = async (req, res) => {
         outstanding_amount: outstanding,
         transactions,
       });
-    } 
-    
-    else {
+    } else {
       res.status(400).json({ error: "Invalid user type" });
     }
   } catch (error) {
-    logger.error(`An error occurred: ${error.message} in customertransaction API`);
+    logger.error(
+      `An error occurred: ${error.message} in customertransaction API`
+    );
     res.status(500).json({ error: "Internal server error" });
   } finally {
     await prisma.$disconnect();
   }
 };
-
 
 module.exports = {
   addadmin,
@@ -1953,5 +1976,5 @@ module.exports = {
   Users,
   Customers_view,
   users_types,
-  customertransaction
+  customertransaction,
 };
