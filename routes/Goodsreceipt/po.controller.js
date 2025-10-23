@@ -121,6 +121,7 @@ const goodsReceipt = async (req, res) => {
         let gr_pr_pl_arr = [];
         let inventory_data_arr = [];
         let total_inv = 0;
+        let total_recvqty = 0;
         const charges = {
           handling_cost: handling_cost,
           logistics_cost: logistics_cost,
@@ -131,16 +132,33 @@ const goodsReceipt = async (req, res) => {
           if (received[i].invoice_amt) {
             total_inv += received[i].invoice_amt;
           }
+          if (received[i].received_qty) {
+            total_recvqty += received[i].received_qty;
+          }
         }
 
         const insertGrQueries = received.map(async (value) => {
           if (value.received_qty) {
-            const p_cost = (total_charge * value.invoice_amt) / total_inv;
+            // const p_cost = (total_charge * value.invoice_amt) / total_inv;
+            // const landing_price = parseInt(p_cost + value.invoice_amt);
+            // const unit_landing_price = landing_price / value.received_qty;
+            // const basePrice = parseInt(value.rate);
+            // const mrp = parseInt(value.mrp);
+            // const selling_price = Math.ceil(unit_landing_price * 1.5);
+
+            ///new cal////////////
+            const charge_perbox = total_charge / total_recvqty;
+            const p_cost = charge_perbox * (value.received_qty);
             const landing_price = parseInt(p_cost + value.invoice_amt);
-            const unit_landing_price = landing_price / value.received_qty;
+            let psc=1;
+            if(value.pricing_unit==="Bundle"){
+              psc=value.number_of_items
+            }
+            const unit_landing_price = (landing_price *psc )/ value.received_qty;
             const basePrice = parseInt(value.rate);
             const mrp = parseInt(value.mrp);
-            const selling_price = Math.ceil(unit_landing_price * 1.1);
+            const selling_price = Math.ceil(unit_landing_price * 1.15);
+
             let gr_batch_num = type === "bikes" ? "BK6456" : "TY4567";
 
             const createdGr = await prisma.goods_receipt.create({
@@ -303,7 +321,9 @@ const closed_purchasedetails = async (request, response) => {
       });
 
       if (!purchaseOrder) {
-        return response.status(404).json({ message: "Purchase order not found" });
+        return response
+          .status(404)
+          .json({ message: "Purchase order not found" });
       }
 
       // 2️⃣ Fetch purchase list (product-level order details)
@@ -413,6 +433,5 @@ const closed_purchasedetails = async (request, response) => {
     await prisma.$disconnect();
   }
 };
-
 
 module.exports = { goodsReceipt, cancel_purchaseorder, closed_purchasedetails };
