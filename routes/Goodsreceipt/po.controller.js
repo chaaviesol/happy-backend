@@ -182,11 +182,11 @@ const goodsReceipt = async (req, res) => {
             console.log({ item_multiplier });
             const p_cost = charge_perbox * value.received_qty;
             const landing_price = parseInt(p_cost + value.invoice_amt);
-            const unit_landing_price = landing_price / actual_qty;
+            const unit_landing_price = landing_price / actual_qty;///////////////dt
             console.log({ unit_landing_price });
             const basePrice = parseInt(value.rate);
             const mrp = parseInt(value.mrp);
-            const selling_price = Math.ceil(unit_landing_price * 1.15);
+            const selling_price = Math.floor(unit_landing_price * 1.15);
             console.log({ selling_price });
             let gr_batch_num = type === "bikes" ? "BK6456" : "TY4567";
 
