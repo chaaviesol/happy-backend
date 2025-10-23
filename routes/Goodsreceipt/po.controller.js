@@ -141,7 +141,7 @@ const goodsReceipt = async (req, res) => {
               item.pricing_unit === "Bundle"
             ) {
               // If bundle → multiply received_qty by number of items in bundle
-              total_recvqty += item.received_qty * (item.no_of_items || 1);
+              total_recvqty += item.received_qty 
             } else if (
               item.pricing_unit?.toLowerCase() === "pieces" ||
               item.pricing_unit?.toLowerCase() === "piece"
@@ -180,7 +180,7 @@ const goodsReceipt = async (req, res) => {
             }
             console.log({ actual_qty });
             console.log({ item_multiplier });
-            const p_cost = charge_perbox * actual_qty;
+            const p_cost = charge_perbox * value.received_qty;
             const landing_price = parseInt(p_cost + value.invoice_amt);
             const unit_landing_price = landing_price / actual_qty;
             console.log({ unit_landing_price });
