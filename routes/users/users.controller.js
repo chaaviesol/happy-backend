@@ -165,8 +165,11 @@ const addUsers = async (request, response) => {
         istDate.getFullYear() +
         month +
         ("0000" + new_user_id).slice(-4);
+      let hashedPass = null;
+      if (password) {
+        hashedPass = await bcrypt.hash(password, 5);
+      }
 
-      const hashedPass = await bcrypt.hash(password, 5);
       await prisma.users.create({
         data: {
           id: new_id,

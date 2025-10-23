@@ -194,6 +194,7 @@ const viewInventory = async (request, response) => {
   const id = request.user.id;
   const usertype = request.user.userType;
   const is_black = request.body.is_black;
+  
   const { type, subCategory, category } = request.body;
 
   try {
