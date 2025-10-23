@@ -129,14 +129,31 @@ const goodsReceipt = async (req, res) => {
         const total_charge = parseInt(handling_cost) + parseInt(logistics_cost);
 
         for (let i = 0; i < received.length; i++) {
-          if (received[i].invoice_amt) {
-            total_inv += received[i].invoice_amt;
+          const item = received[i];
+
+          if (item.invoice_amt) {
+            total_inv += item.invoice_amt;
           }
-          if (received[i].received_qty) {
-            total_recvqty += received[i].received_qty;
+
+          if (item.received_qty) {
+            if (
+              item.pricing_unit === "bundle" ||
+              item.pricing_unit === "Bundle"
+            ) {
+              // If bundle → multiply received_qty by number of items in bundle
+              total_recvqty += item.received_qty * (item.no_of_items || 1);
+            } else if (
+              item.pricing_unit?.toLowerCase() === "pieces" ||
+              item.pricing_unit?.toLowerCase() === "piece"
+            ) {
+              // If pieces → count as 1
+              total_recvqty += 1;
+            } else {
+              total_recvqty += item.received_qty;
+            }
           }
         }
-
+        console.log("total_recvqty", total_recvqty);
         const insertGrQueries = received.map(async (value) => {
           if (value.received_qty) {
             // const p_cost = (total_charge * value.invoice_amt) / total_inv;
@@ -148,17 +165,29 @@ const goodsReceipt = async (req, res) => {
 
             ///new cal////////////
             const charge_perbox = total_charge / total_recvqty;
-            const p_cost = charge_perbox * (value.received_qty);
-            const landing_price = parseInt(p_cost + value.invoice_amt);
-            let psc=1;
-            if(value.pricing_unit==="Bundle"){
-              psc=value.number_of_items
+
+            let actual_qty = value.received_qty;
+            let item_multiplier = 1;
+
+            if (value.type === "bundle" || value.pricing_unit === "Bundle") {
+              item_multiplier = value.no_of_items || 1;
+              actual_qty = value.received_qty * item_multiplier;
+            } else if (
+              value.pricing_unit?.toLowerCase() === "pieces" ||
+              value.pricing_unit?.toLowerCase() === "piece"
+            ) {
+              actual_qty = 1;
             }
-            const unit_landing_price = (landing_price *psc )/ value.received_qty;
+            console.log({ actual_qty });
+            console.log({ item_multiplier });
+            const p_cost = charge_perbox * actual_qty;
+            const landing_price = parseInt(p_cost + value.invoice_amt);
+            const unit_landing_price = landing_price / actual_qty;
+            console.log({ unit_landing_price });
             const basePrice = parseInt(value.rate);
             const mrp = parseInt(value.mrp);
             const selling_price = Math.ceil(unit_landing_price * 1.15);
-
+            console.log({ selling_price });
             let gr_batch_num = type === "bikes" ? "BK6456" : "TY4567";
 
             const createdGr = await prisma.goods_receipt.create({
@@ -180,7 +209,7 @@ const goodsReceipt = async (req, res) => {
             const gr_pl_data = {
               gr_id: createdGr.goods_id,
               product_id: value.product_id,
-              received_qty: value.received_qty,
+              received_qty: actual_qty,
               base_price: basePrice,
               landing_price: landing_price,
               max_retail_price: mrp,
@@ -191,7 +220,7 @@ const goodsReceipt = async (req, res) => {
             const inventory_data = {
               prod_id: value.product_id,
               batch_id: createdGr.batch_num,
-              received_qty: value.received_qty,
+              received_qty: actual_qty,
               mrp: parseInt(value.mrp),
               selling_price: selling_price,
               base_price: basePrice,
