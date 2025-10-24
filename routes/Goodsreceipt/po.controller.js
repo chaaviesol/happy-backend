@@ -73,7 +73,20 @@ const goodsReceipt = async (req, res) => {
               (item) => val.product_id === item.product_id
             );
             if (matchedElem) {
-              const updatedRecQty = val.received_qty + matchedElem.received_qty;
+              let rec_qty = matchedElem.received_qty;
+
+              // check for bundle logic
+              if (
+                matchedElem.type === "bundle" ||
+                matchedElem.pricing_unit === "Bundle"
+              ) {
+                const no_of_items = matchedElem.no_of_items || 1; 
+                rec_qty = matchedElem.received_qty * no_of_items;
+              }
+
+              // calculate total received qty
+              const updatedRecQty = (val.received_qty || 0) + rec_qty;
+              // const updatedRecQty = val.received_qty + matchedElem.received_qty;
               // if (updatedRecQty > val.order_qty) {
               //   throw new Error("Received quantity exceeds order quantity");
               // }
@@ -238,7 +251,7 @@ const goodsReceipt = async (req, res) => {
         const gr_list_data = gr_pr_pl_arr.map((val) => ({
           gr_id: val.gr_id,
           product_id: val.product_id,
-          received_qty: val.received_qty,
+          received_qty: actual_qty,
           created_by: logged_id.toString(),
           created_on: u_date,
           base_price: val.base_price,
