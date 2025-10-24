@@ -251,7 +251,7 @@ const goodsReceipt = async (req, res) => {
         const gr_list_data = gr_pr_pl_arr.map((val) => ({
           gr_id: val.gr_id,
           product_id: val.product_id,
-          received_qty: actual_qty,
+          received_qty: val.received_qty,
           created_by: logged_id.toString(),
           created_on: u_date,
           base_price: val.base_price,
