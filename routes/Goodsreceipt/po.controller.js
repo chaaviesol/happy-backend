@@ -180,11 +180,12 @@ const goodsReceipt = async (req, res) => {
             }
             console.log({ actual_qty });
             console.log({ item_multiplier });
-            const p_cost = charge_perbox * actual_qty;
-            console.log({p_cost})
+            const p_cost = charge_perbox * value.received_qty;
+            console.log({ p_cost });
             const landing_price = parseInt(p_cost + value.invoice_amt);
-            console.log({landing_price})
-            const unit_landing_price = (landing_price / value.received_qty); ///////////////dt
+            console.log({ landing_price });
+            const unit_landing_price =
+              (landing_price / value.no_of_items) * value.received_qty; ///////////////dt
             console.log({ unit_landing_price });
             const basePrice = parseInt(value.rate);
             const mrp = parseInt(value.mrp);
