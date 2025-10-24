@@ -80,7 +80,7 @@ const goodsReceipt = async (req, res) => {
                 matchedElem.type === "bundle" ||
                 matchedElem.pricing_unit === "Bundle"
               ) {
-                const no_of_items = matchedElem.no_of_items || 1; 
+                const no_of_items = matchedElem.no_of_items || 1;
                 rec_qty = matchedElem.received_qty * no_of_items;
               }
 
@@ -181,6 +181,7 @@ const goodsReceipt = async (req, res) => {
             console.log({ charge_perbox });
             let actual_qty = value.received_qty;
             let item_multiplier = 1;
+            let bundle_qty = value.received_qty;
 
             if (value.type === "bundle" || value.pricing_unit === "Bundle") {
               item_multiplier = value.no_of_items || 1;
@@ -189,16 +190,19 @@ const goodsReceipt = async (req, res) => {
               value.pricing_unit?.toLowerCase() === "pieces" ||
               value.pricing_unit?.toLowerCase() === "piece"
             ) {
+              item_multiplier = value.no_of_items || 1;
               actual_qty = 1;
+              bundle_qty = value.received_qty / item_multiplier;
             }
             console.log({ actual_qty });
             console.log({ item_multiplier });
-            const p_cost = charge_perbox * value.received_qty;
+             console.log({ bundle_qty });
+            const p_cost = charge_perbox * bundle_qty;
             console.log({ p_cost });
             const landing_price = parseInt(p_cost + value.invoice_amt);
             console.log({ landing_price });
             const unit_landing_price =
-              (landing_price / value.no_of_items) * value.received_qty; ///////////////dt
+              (landing_price / value.no_of_items) * bundle_qty; ///////////////dt
             console.log({ unit_landing_price });
             const basePrice = parseInt(value.rate);
             const mrp = parseInt(value.mrp);
