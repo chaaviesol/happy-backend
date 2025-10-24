@@ -193,10 +193,13 @@ const goodsReceipt = async (req, res) => {
               item_multiplier = value.no_of_items || 1;
               actual_qty = 1;
               bundle_qty = value.received_qty / item_multiplier;
+              if (bundle_qty < 1) {
+                bundle_qty = 1;
+              }
             }
             console.log({ actual_qty });
             console.log({ item_multiplier });
-             console.log({ bundle_qty });
+            console.log({ bundle_qty });
             const p_cost = charge_perbox * bundle_qty;
             console.log({ p_cost });
             const landing_price = parseInt(p_cost + value.invoice_amt);
