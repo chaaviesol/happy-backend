@@ -141,7 +141,7 @@ const goodsReceipt = async (req, res) => {
               item.pricing_unit === "Bundle"
             ) {
               // If bundle → multiply received_qty by number of items in bundle
-              total_recvqty += item.received_qty 
+              total_recvqty += item.received_qty;
             } else if (
               item.pricing_unit?.toLowerCase() === "pieces" ||
               item.pricing_unit?.toLowerCase() === "piece"
@@ -165,7 +165,7 @@ const goodsReceipt = async (req, res) => {
 
             ///new cal////////////
             const charge_perbox = total_charge / total_recvqty;
-
+            console.log({ charge_perbox });
             let actual_qty = value.received_qty;
             let item_multiplier = 1;
 
@@ -181,8 +181,10 @@ const goodsReceipt = async (req, res) => {
             console.log({ actual_qty });
             console.log({ item_multiplier });
             const p_cost = charge_perbox * value.received_qty;
+            console.log({p_cost})
             const landing_price = parseInt(p_cost + value.invoice_amt);
-            const unit_landing_price = landing_price / actual_qty;///////////////dt
+            console.log({landing_price})
+            const unit_landing_price = (landing_price / value.received_qty); ///////////////dt
             console.log({ unit_landing_price });
             const basePrice = parseInt(value.rate);
             const mrp = parseInt(value.mrp);
@@ -404,7 +406,6 @@ const closed_purchasedetails = async (request, response) => {
         lrDetails.push({
           lr_num: lr.lr_num,
           created_date: lr.created_date,
-          lr_no: lr.lr_no,
           created_by: lr.created_by,
         });
       }
