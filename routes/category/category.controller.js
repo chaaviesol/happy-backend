@@ -60,7 +60,7 @@ const viewCategory = async (request, response) => {
     } else {
       logger.error(`Unauthorized- in viewCategory api`);
       return response
-        .status(403)
+        .status(404)
         .json({ message: "Unauthorized. You are not an admin" });
     }
   } catch (error) {
@@ -157,7 +157,7 @@ const Categorymaster = async (request, res) => {
     } else {
       logger.error(`Unauthorized- in Categorymaster api`);
       return res
-        .status(403)
+        .status(404)
         .json({ message: "Unauthorized. You are not an admin" });
     }
   } catch (error) {
@@ -223,7 +223,7 @@ const viewSubCatAndSpecs = async (request, res) => {
     } else {
       logger.error(`Unauthorized- in viewSubCatAndSpecs api`);
       return res
-        .status(403)
+        .status(404)
         .json({ message: "Unauthorized. You are not an admin" });
     }
   } catch (error) {
@@ -276,7 +276,7 @@ const viewSpecValues = async (request, res) => {
     } else {
       logger.error(`Unauthorized- in viewSpecValues api`);
       return res
-        .status(403)
+        .status(404)
         .json({ message: "Unauthorized. You are not an admin" });
     }
   } catch (error) {
@@ -352,7 +352,7 @@ const addCategory = async (request, res) => {
   } else {
     logger.error(`Unauthorized- in addCategory api`);
     return res
-      .status(403)
+      .status(404)
       .json({ message: "Unauthorized. You are not an admin" });
   }
 };
@@ -431,7 +431,7 @@ const addSubCategory = async (request, res) => {
   } else {
     logger.error(`Unauthorized- in addSubCategory api`);
     return res
-      .status(403)
+      .status(404)
       .json({ message: "Unauthorized. You are not an admin" });
   }
 };
@@ -518,7 +518,7 @@ const addSpec = async (request, res) => {
   } else {
     logger.error(`Unauthorized- in addspec api`);
     return res
-      .status(403)
+      .status(404)
       .json({ message: "Unauthorized. You are not an admin" });
   }
 };
@@ -585,7 +585,7 @@ const manageSpecvalue = async (request, res) => {
     } else {
       logger.error(`Unauthorized- in managespecvalue api`);
       return res
-        .status(403)
+        .status(404)
         .json({ message: "Unauthorized. You are not an admin" });
     }
   } catch (error) {
@@ -647,7 +647,7 @@ const deleteCategory = async (request, res) => {
     } else {
       logger.error(`Unauthorized- in deletecategory api`);
       return res
-        .status(403)
+        .status(404)
         .json({ message: "Unauthorized. You are not an admin" });
     }
   } catch (error) {
@@ -708,7 +708,7 @@ const deleteSpecs = async (request, res) => {
     } else {
       logger.error(`Unauthorized- in deleteSpecs api`);
       return res
-        .status(403)
+        .status(404)
         .json({ message: "Unauthorized. You are not an admin" });
     }
   } catch (error) {
