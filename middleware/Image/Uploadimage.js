@@ -46,6 +46,28 @@ async function downloadFileFromS3(fileUrl) {
   }
 }
 
+async function downloadProdFileFromS3(fileUrl) {
+  const key = fileUrl.split('.amazonaws.com/').pop(); // Extract the S3 key from URL
+console.log("heyyyyyyyyyy")
+  const params = {
+    Bucket: process.env.AWS_S3_ACCESS_BUCKET_NAME,
+    Key: key,
+  };
+
+  try {
+    const data = await awsS3.send(new GetObjectCommand(params));
+    const chunks = [];
+    for await (const chunk of data.Body) {
+      chunks.push(chunk);
+    }
+    return Buffer.concat(chunks);
+  } catch (error) {
+    console.error("Error downloading file from S3:", error);
+    throw error;
+  }
+}
+
+
 // Multipart upload function
 async function multipartUpload(buffer, s3Key, contentType) {
   let uploadId;
@@ -246,5 +268,5 @@ const compressImage = async (req, res, next) => {
 //   }
 // }
 
-module.exports = { upload, multipartUpload, downloadFileFromS3,compressImage };
+module.exports = { upload, multipartUpload, downloadFileFromS3,compressImage,downloadProdFileFromS3 };
 

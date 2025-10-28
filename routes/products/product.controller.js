@@ -9,6 +9,7 @@ const {
   upload,
   multipartUpload,
   downloadFileFromS3,
+  downloadProdFileFromS3
 } = require("../../middleware/Image/Uploadimage");
 const xlsx = require("xlsx");
 
@@ -245,7 +246,7 @@ const productmgmt = async (request, response) => {
           // If file is larger than 5 MB
           const fileUrl = file.location; // S3 URL
 
-          const buffer = await downloadFileFromS3(fileUrl);
+          const buffer = await downloadProdFileFromS3(fileUrl);
           const s3Key = `${Date.now()}-${file.originalname}`;
           const contentType = file.mimetype;
           const uploadResult = await multipartUpload(
