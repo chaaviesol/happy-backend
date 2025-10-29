@@ -303,6 +303,7 @@ const productmgmt = async (request, response) => {
           usertype,
           min_stk,
           assign_code,
+          parent_id
         } = data;
 
         let product_desc = data.desc;
@@ -445,7 +446,7 @@ const productmgmt = async (request, response) => {
               created_date: istDate,
               is_active: p_flag,
               unit_of_measure: unit_of_measure,
-              // parent_product_id: parent_id,
+              parent_product_id: parent_id,
               // updated_by: user,
               updated_date: p_created,
               image1_link: prodImage?.image1,
@@ -494,6 +495,7 @@ const productmgmt = async (request, response) => {
             min_stk,
             assign_code,
             brand_id,
+            parent_id
           } = data;
 
           const sup_idd = data?.supplier_id; ///////sup_name
@@ -603,7 +605,7 @@ const productmgmt = async (request, response) => {
                   created_by: users,
                   is_active: p_flag,
                   unit_of_measure: unit_of_measure,
-                  // parent_product_id: parent_id,
+                  parent_product_id: parent_id,
                   updated_by: user,
                   updated_date: istDate,
                   image1_link: prodImage?.image1,
