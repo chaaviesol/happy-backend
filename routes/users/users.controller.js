@@ -222,59 +222,134 @@ const addUsers = async (request, response) => {
   }
 };
 
+// const updateuser = async (request, response) => {
+//   try {
+//     const user_id = request.body.user_id;
+
+//     const updatelog = await prisma.users.findUnique({
+//       where: {
+//         user_id: user_id,
+//       },
+//     });
+
+//     if (!updatelog) {
+//       const respText = "User not found!";
+//       response.status(201).json(respText);
+//     } else {
+//       const {
+//         user_name,
+//         password,
+//         email,
+//         yearsinbusiness,
+//         mobile,
+//         landline,
+//         website,
+//         address,
+//         grade,
+//       } = request.body;
+
+//       try {
+//         if(user_name==updatelog.user_name){
+
+//         }
+//         const updatedUser = await prisma.users.update({
+//           where: {
+//             user_id: user_id,
+//           },
+//           data: {
+//             // user_name: user_name,
+//             password: password,
+//             email: email,
+//             yearsinbusiness: yearsinbusiness,
+//             mobile: mobile,
+//             landline: landline,
+//             website: website,
+//             address: address,
+//             updated_date: istDate,
+//             grade: grade,
+//           },
+//         });
+//         const respText = user_name + " updated successfully";
+//         response.status(201).json({ message: respText, data: updatedUser });
+//       } catch (err) {
+//         response.status(500).json("Internal Server Error");
+//       }
+//     }
+//   } catch (error) {
+//     logger.error(`Internal server error: ${error.message} in updateuser api`);
+//     response.status(500).json(error.message);
+//   } finally {
+//     await prisma.$disconnect();
+//   }
+// };
+
 const updateuser = async (request, response) => {
   try {
     const user_id = request.body.user_id;
 
     const updatelog = await prisma.users.findUnique({
-      where: {
-        user_id: user_id,
-      },
+      where: { user_id },
     });
 
     if (!updatelog) {
-      const respText = "User not found!";
-      response.status(201).json(respText);
-    } else {
-      const {
-        user_name,
-        password,
-        email,
-        yearsinbusiness,
-        mobile,
-        landline,
-        website,
-        address,
-        grade,
-      } = request.body;
-
-      try {
-        const updatedUser = await prisma.users.update({
-          where: {
-            user_id: user_id,
-          },
-          data: {
-            user_name: user_name,
-            password: password,
-            email: email,
-            yearsinbusiness: yearsinbusiness,
-            mobile: mobile,
-            landline: landline,
-            website: website,
-            address: address,
-            updated_date: istDate,
-            grade: grade,
-          },
-        });
-        const respText = user_name + " updated successfully";
-        response.status(201).json({ message: respText, data: updatedUser });
-      } catch (err) {
-        response.status(500).json("Internal Server Error");
-      }
+      return response.status(404).json({ message: "User not found!" });
     }
+
+    const {
+      user_name,
+      password,
+      email,
+      yearsinbusiness,
+      mobile,
+      landline,
+      website,
+      address,
+      grade,
+    } = request.body;
+
+    let updateData = {
+      password,
+      email,
+      yearsinbusiness,
+      mobile,
+      landline,
+      website,
+      address,
+      grade,
+      updated_date: istDate,
+    };
+
+    // Check if username changed
+    if (user_name && user_name !== updatelog.user_name) {
+      const existingUser = await prisma.users.findFirst({
+        where: { user_name },
+      });
+
+      if (existingUser) {
+        return response
+          .status(400)
+          .json({ message: "Username already exists!" });
+      }
+
+      // If username is different and available, include it in update
+      updateData.user_name = user_name;
+    }
+
+    // Proceed with update (username only included if changed)
+    const updatedUser = await prisma.users.update({
+      where: { user_id },
+      data: updateData,
+    });
+
+    response.status(200).json({
+      message: `${
+        updateData.user_name || updatelog.user_name
+      } updated successfully`,
+      data: updatedUser,
+    });
   } catch (error) {
     logger.error(`Internal server error: ${error.message} in updateuser api`);
-    response.status(500).json(error.message);
+    response.status(500).json({ message: "Internal Server Error" });
   } finally {
     await prisma.$disconnect();
   }
