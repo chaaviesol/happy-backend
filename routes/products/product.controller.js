@@ -156,6 +156,7 @@ const viewbrands = async (request, response) => {
           select: {
             brand_id: true,
             brand_name: true,
+            supplier_id:true
           },
           where: {
             product_type: product_type,
@@ -182,6 +183,7 @@ const viewbrands = async (request, response) => {
             select: {
               brand_id: true,
               brand_name: true,
+               supplier_id:true
             },
             where: {
               product_type: staff?.division,
@@ -204,6 +206,7 @@ const viewbrands = async (request, response) => {
             select: {
               brand_id: true,
               brand_name: true,
+               supplier_id:true
             },
             where: {
               product_type: {
