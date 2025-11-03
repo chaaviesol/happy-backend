@@ -9,7 +9,7 @@ const {
   upload,
   multipartUpload,
   downloadFileFromS3,
-  downloadProdFileFromS3
+  downloadProdFileFromS3,
 } = require("../../middleware/Image/Uploadimage");
 const xlsx = require("xlsx");
 
@@ -148,6 +148,7 @@ const viewbrands = async (request, response) => {
   try {
     if (usertype == "ADM" || usertype === "SU" || usertype === "SUP") {
       const product_type = request.body.prod_type;
+      const supplier_id = request.body.supplier_id;
       console.log("product_type =>>>", product_type);
       const id = request.user.id;
       if (product_type) {
@@ -158,6 +159,7 @@ const viewbrands = async (request, response) => {
           },
           where: {
             product_type: product_type,
+            supplier_id: supplier_id,
           },
         });
         response.status(201).json(view);
@@ -183,6 +185,7 @@ const viewbrands = async (request, response) => {
             },
             where: {
               product_type: staff?.division,
+              supplier_id: supplier_id,
             },
           });
           response.status(201).json(view);
@@ -206,6 +209,7 @@ const viewbrands = async (request, response) => {
               product_type: {
                 in: productTypes,
               },
+              supplier_id: supplier_id,
             },
           });
           response.status(201).json(view);
@@ -303,7 +307,7 @@ const productmgmt = async (request, response) => {
           usertype,
           min_stk,
           assign_code,
-          parent_id
+          parent_id,
         } = data;
 
         let product_desc = data.desc;
@@ -495,7 +499,7 @@ const productmgmt = async (request, response) => {
             min_stk,
             assign_code,
             brand_id,
-            parent_id
+            parent_id,
           } = data;
 
           const sup_idd = data?.supplier_id; ///////sup_name
