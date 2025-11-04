@@ -196,6 +196,7 @@ const newsalesOrder = async (request, response) => {
               discount: parseInt(product?.normalDiscount?.discount) || 0, //nw
               batch: deductions,
               created_date: istDate,
+              pricing_unit:product?.pricing_unit,
               couponCode: product?.couponDiscount?.couponCode, //nw
             },
           });

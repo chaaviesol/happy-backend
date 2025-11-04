@@ -327,6 +327,7 @@ model sales_list {
   net_amount      Decimal?          @db.Decimal
   batch           Json?             @db.Json
   couponCode      String?           @db.VarChar
+  pricing_unit    String?         @db.VarChar
   return_request  return_request[]
   campaigns       campaigns?        @relation(fields: [couponCode], references: [coupon_code], onDelete: NoAction, onUpdate: NoAction, map: "coupon_applied")
   product_master  product_master?   @relation(fields: [product_id], references: [product_id], onDelete: NoAction, onUpdate: NoAction, map: "product_id")
