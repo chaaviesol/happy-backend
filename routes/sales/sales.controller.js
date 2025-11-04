@@ -139,7 +139,7 @@ const newsalesOrder = async (request, response) => {
             },
           });
           // let qty = parseInt(product.qty);
-          let qty = parseInt(product.effective_qty);//changed from qty to effective_qty
+          let qty = parseInt(product.effective_qty); //changed from qty to effective_qty
           const deductions = [];
           for (let k = 0; k < oldestInventoryEntries.length; k++) {
             const prodinv = oldestInventoryEntries[k].INVENTORY_id;
@@ -196,7 +196,7 @@ const newsalesOrder = async (request, response) => {
               discount: parseInt(product?.normalDiscount?.discount) || 0, //nw
               batch: deductions,
               created_date: istDate,
-              pricing_unit:product?.pricing_unit,
+              pricing_unit: product?.pricing_unit,
               couponCode: product?.couponDiscount?.couponCode, //nw
             },
           });
@@ -1189,9 +1189,17 @@ const quoted_details = async (request, response) => {
 
           ///////////////////
           if (productTypeResult) {
+            let calculatedQty = prod.order_qty;
+            if (
+              sales_list[i].pricing_unit &&
+              sales_list[i].pricing_unit.toLowerCase() === "bundle" &&
+              productTypeResult.no_of_items > 0
+            ) {
+              calculatedQty = prod.order_qty / productTypeResult.no_of_items;
+            }
             productsArray.push({
               product_id: prod.product_id,
-              qty: prod.order_qty,
+              qty: prod.calculatedQty,
               selecttype: prod.delivery_type,
               prod_type: productTypeResult.product_type,
               product_name: productTypeResult.product_name,
