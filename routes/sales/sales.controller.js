@@ -138,8 +138,8 @@ const newsalesOrder = async (request, response) => {
               INVENTORY_id: "asc",
             },
           });
-          let qty = parseInt(product.qty);
-
+          // let qty = parseInt(product.qty);
+          let qty = parseInt(product.effective_qty);//changed from qty to effective_qty
           const deductions = [];
           for (let k = 0; k < oldestInventoryEntries.length; k++) {
             const prodinv = oldestInventoryEntries[k].INVENTORY_id;
