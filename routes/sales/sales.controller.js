@@ -188,7 +188,7 @@ const newsalesOrder = async (request, response) => {
             data: {
               so_number: sales_orderdata.sales_id,
               product_id: product.product_id,
-              order_qty: parseInt(product.qty),
+              order_qty: parseInt(product.effective_qty),
               sales_price: sales_price, //actually selling_price// changed from original_price
               fitting_charge: parseInt(product.fitting_charge) || 0,
               delivery_type: product.selecttype,
@@ -1204,6 +1204,7 @@ const quoted_details = async (request, response) => {
               original_price: maxMrp._min.selling_price,
               net_amount: sales_list[i].net_amount,
               product_Price: sales_list[i].sales_price,
+              pricing_unit: sales_list[i].pricing_unit,
               normalDiscount: { discount: sales_list[i].discount }, //changed from disc
               fitting_charge: sales_list[i].fitting_charge,
               activeCampaigns: activeCampaigns || [],
