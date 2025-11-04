@@ -1199,7 +1199,7 @@ const quoted_details = async (request, response) => {
             }
             productsArray.push({
               product_id: prod.product_id,
-              qty: prod.calculatedQty,
+              qty: calculatedQty,
               selecttype: prod.delivery_type,
               prod_type: productTypeResult.product_type,
               product_name: productTypeResult.product_name,

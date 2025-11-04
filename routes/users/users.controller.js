@@ -287,6 +287,8 @@ const updateuser = async (request, response) => {
   try {
     const user_id = request.body.user_id;
 
+    console.log("update user===>",request.body);
+    
     const updatelog = await prisma.users.findUnique({
       where: { user_id },
     });

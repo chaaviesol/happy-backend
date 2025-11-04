@@ -510,7 +510,11 @@ const profileedit = async (req, res) => {
       usertype === "ADM" ||
       usertype === "SUP"
     ) {
+      console.log("pro edit==>req.user.id",req.user.id);
+      
       const logged_id = req.user.id;
+      console.log("pro edit =>",req.body);
+      
       const { user_name, mobile, landline, website, product_type } = req.body;
       const updatedDate = new Date();
       const profiledata = await prisma.users.update({
