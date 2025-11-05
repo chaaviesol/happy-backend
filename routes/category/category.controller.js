@@ -55,7 +55,11 @@ const viewCategory = async (request, response) => {
         logger.error(`No data found for type: ${type} in viewcategry api`);
       } else {
         const categories = responses.map((item) => item.category);
-        response.send(categories);
+        // response.send(categories);
+         response.status(200).json({
+          error: false,
+          data: categories,
+        });
       }
     } else {
       logger.error(`Unauthorized- in viewCategory api`);
