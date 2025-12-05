@@ -714,3 +714,22 @@ model settleaccount_details {
   settled_date DateTime? @db.Timestamp(6)
   amount       Float?
 }
+
+model expense_details {
+  id            Int       @id @default(autoincrement())
+  created_date  DateTime? @db.Timestamp(6)
+  created_by    Int?
+  party         String?   @db.VarChar
+  category      String?   @db.VarChar
+  subcategory   String?   @db.VarChar
+  amount        Float?
+  payments      Json?         @db.Json
+}
+
+model expense_category {
+  id            Int           @id @default(autoincrement())
+  created_date  DateTime?     @db.Timestamp(6)
+  created_by    Int?
+  category      String?       @db.VarChar
+  subcategory   Json?         @db.Json 
+}

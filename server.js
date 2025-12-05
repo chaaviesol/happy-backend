@@ -25,6 +25,7 @@ const useraccessRouter = require("./routes/user_access/user_access.routes");
 const salesordersRouter = require("./routes/sales_orders/sales_orders.routes");
 const campaignRouter = require("./routes/campaign/campaign.routes");
 const profitrouter = require("./routes/profit/profit.routes");
+const expenseRouter = require("./routes/expense/expense.routes");
 
 server.use(
   cors({
@@ -57,6 +58,7 @@ server.use("/useraccess", auth, useraccessRouter);
 server.use("/salesorders", auth, salesordersRouter);
 server.use("/campaign", auth, campaignRouter);
 server.use("/profit", auth, profitrouter);
+server.use("/expense", expenseRouter);
 server.use(helmet.crossOriginResourcePolicy({ policy: "cross-origin" }));
 
 if (process.env.NODE_ENV === "development") {
