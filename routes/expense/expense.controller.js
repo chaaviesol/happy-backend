@@ -30,31 +30,37 @@ const currentDate = new Date();
 const istOffset = 5 * 60 * 60 * 1000 + 30 * 60 * 1000;
 const istDate = new Date(currentDate.getTime() + istOffset);
 
-const viewCategory = async (request, response) => {
+const viewCategory = async (req, res) => {
   try {
-    const responses = await prisma.expense_category.findMany({
-      orderBy: {
-        category: "asc",
-      },
+    const categories = await prisma.expense_category.findMany({
+      orderBy: { category: "asc" },
     });
 
-    if (responses.length === 0) {
-      response.status(404).json({
+    if (categories.length === 0) {
+      logger.error("No categories found - expense-viewCategory API");
+      return res.status(404).json({
         error: true,
-        message: "no data",
+        message: "No data",
+        data: [],
       });
-
-      logger.error(`No data found  expense-viewcategry api`);
     }
+
+    logger.info("Categories fetched successfully - expense-viewCategory API");
+
+    return res.status(200).json({
+      error: false,
+      message: "Success",
+      data: categories,
+    });
+
   } catch (error) {
     logger.error(
-      `Internal server error: ${error.message} in expense-viewcategory api`
+      `Internal server error: ${error.message} - expense-viewCategory API`
     );
-    response.status(500).json({
-      error: "Internal server error",
+    return res.status(500).json({
+      error: true,
+      message: "Internal server error",
     });
-  } finally {
-    await prisma.$disconnect();
   }
 };
 
