@@ -252,7 +252,7 @@ const getexpenses = async (request, response) => {
         date,
         party: r.party ?? null,
         category: r.category ?? null,
-        subcategory: r.subcategory ?? null, 
+        subCategory: r.subcategory ?? null, 
         amount,
         paid,
         balance,
