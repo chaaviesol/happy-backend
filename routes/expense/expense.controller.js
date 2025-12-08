@@ -52,7 +52,6 @@ const viewCategory = async (req, res) => {
       message: "Success",
       data: categories,
     });
-
   } catch (error) {
     logger.error(
       `Internal server error: ${error.message} - expense-viewCategory API`
@@ -151,42 +150,96 @@ const addCategory = async (req, res) => {
   }
 };
 
+// const addexpense = async (req, res) => {
+//   const { category, party, subcategory, amount, payments } = req.body;
+
+//   // Collect missing fields
+//   let missing = [];
+//   if (!category) missing.push("category");
+//   if (!party) missing.push("party");
+//   if (!subcategory) missing.push("subcategory");
+//   if (!amount) missing.push("amount");
+
+//   if (missing.length > 0) {
+//     return res.status(400).json({
+//       error: true,
+//       message: `Missing required field(s): ${missing.join(", ")}`,
+//     });
+//   }
+//   try {
+//     const newExpense = await prisma.expense_details.create({
+//       data: {
+//         created_date: istDate,
+//         category,
+//         party,
+//         subcategory,
+//         amount,
+//         payments,
+//       },
+//     });
+
+//     return res.status(200).json({
+//       success: true,
+//       message: "New expense added",
+//       data: newExpense,
+//     });
+//   } catch (error) {
+//     logger.error(`Internal server error: ${error.message} in addexpense API`);
+
+//     return res.status(500).json({
+//       error: true,
+//       message: "Internal server error",
+//     });
+//   }
+// };
+
 const addexpense = async (req, res) => {
-  const { category, party, subcategory, amount, payments } = req.body;
+  const items = req.body;
 
-  // Collect missing fields
-  let missing = [];
-  if (!category) missing.push("category");
-  if (!party) missing.push("party");
-  if (!subcategory) missing.push("subcategory");
-  if (!amount) missing.push("amount");
-
-  if (missing.length > 0) {
+  if (!Array.isArray(items) || items.length === 0) {
     return res.status(400).json({
       error: true,
-      message: `Missing required field(s): ${missing.join(", ")}`,
+      message: "Request body must be a non-empty array",
     });
   }
+
+  // Validate each row has required fields
+  for (let i = 0; i < items.length; i++) {
+    const { category, party, subCategory, amount } = items[i];
+    const subcategory = items[i].subcategory || subCategory;
+
+    if (!category || !party || !subcategory || !amount) {
+      return res.status(400).json({
+        error: true,
+        message: `Missing fields in item index ${i}`,
+      });
+    }
+  }
+
   try {
-    const newExpense = await prisma.expense_details.create({
-      data: {
-        created_date: istDate,
-        category,
-        party,
-        subcategory,
-        amount,
-        payments,
-      },
-    });
+    // Insert all items using transaction
+    const result = await prisma.$transaction(
+      items.map((item) => {
+        return prisma.expense_details.create({
+          data: {
+            created_date: istDate,
+            category: item.category,
+            party: item.party,
+            subcategory: item.subcategory || item.subCategory,
+            amount: item.amount,
+            payments: item.payments || [],
+          },
+        });
+      })
+    );
 
     return res.status(200).json({
       success: true,
-      message: "New expense added",
-      data: newExpense,
+      message: "Expenses added successfully",
+      data: result,
     });
   } catch (error) {
     logger.error(`Internal server error: ${error.message} in addexpense API`);
-
     return res.status(500).json({
       error: true,
       message: "Internal server error",
@@ -240,9 +293,14 @@ const getexpenses = async (request, response) => {
 
       // Unique payment types (method) joined by comma
       const paymentTypeArr = [
-        ...new Set(payments.map((p) => (p?.method ? String(p.method).trim() : null)).filter(Boolean)),
+        ...new Set(
+          payments
+            .map((p) => (p?.method ? String(p.method).trim() : null))
+            .filter(Boolean)
+        ),
       ];
-      const paymentType = paymentTypeArr.length > 0 ? paymentTypeArr.join(", ") : null;
+      const paymentType =
+        paymentTypeArr.length > 0 ? paymentTypeArr.join(", ") : null;
 
       // Choose a top-level date: first payment date (if any) else created_date
       const date = payments[0]?.date ?? r.created_date ?? null;
@@ -252,7 +310,7 @@ const getexpenses = async (request, response) => {
         date,
         party: r.party ?? null,
         category: r.category ?? null,
-        subCategory: r.subcategory ?? null, 
+        subCategory: r.subcategory ?? null,
         amount,
         paid,
         balance,
@@ -262,18 +320,56 @@ const getexpenses = async (request, response) => {
       };
     });
 
-    logger.info(`Fetched ${transformed.length} expense records - expense-getexpenses API`);
+    logger.info(
+      `Fetched ${transformed.length} expense records - expense-getexpenses API`
+    );
     return response.status(200).json({
       error: false,
       message: "success",
       data: transformed,
     });
   } catch (error) {
-    logger.error(`Internal server error: ${error.message} in expense-getexpenses API`);
+    logger.error(
+      `Internal server error: ${error.message} in expense-getexpenses API`
+    );
     return response.status(500).json({
       error: "Internal server error",
     });
   }
 };
 
-module.exports = { viewCategory, addCategory, addexpense, getexpenses };
+const updatepayment = async (req, res) => {
+  const { payments, id } = req.body;
+
+  if (!Array.isArray(payments) || payments.length === 0) {
+    return res.status(400).json({
+      error: true,
+      message: "Request body must be a non-empty array",
+    });
+  }
+
+  try {
+    const result = await prisma.expense_details.update({
+      where: {
+        id: id,
+      },
+      data: {
+        payments: payments || [],
+      },
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Payment updated successfully",
+      data: result,
+    });
+  } catch (error) {
+    logger.error(`Internal server error: ${error.message} in expense-updatepayment API`);
+    return res.status(500).json({
+      error: true,
+      message: "Internal server error",
+    });
+  }
+};
+
+module.exports = { viewCategory, addCategory, addexpense, getexpenses ,updatepayment};
