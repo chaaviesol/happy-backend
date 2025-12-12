@@ -364,7 +364,9 @@ const updatepayment = async (req, res) => {
       data: result,
     });
   } catch (error) {
-    logger.error(`Internal server error: ${error.message} in expense-updatepayment API`);
+    logger.error(
+      `Internal server error: ${error.message} in expense-updatepayment API`
+    );
     return res.status(500).json({
       error: true,
       message: "Internal server error",
@@ -372,4 +374,107 @@ const updatepayment = async (req, res) => {
   }
 };
 
-module.exports = { viewCategory, addCategory, addexpense, getexpenses ,updatepayment};
+const deleteExpense = async (req, res) => {
+  const { id } = req.params;
+  if (!id) {
+    return res
+      .status(400)
+      .json({ error: true, message: "Missing expense id in params" });
+  }
+
+  try {
+    const deleted = await prisma.expense_details.delete({
+      where: { id: id },
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Expense deleted successfully",
+      data: deleted,
+    });
+  } catch (error) {
+    logger.error(
+      `Internal server error: ${error.message} in deleteExpense API`
+    );
+    if (error.code === "P2025") {
+      return res
+        .status(404)
+        .json({ error: true, message: "Expense not found" });
+    }
+    return res
+      .status(500)
+      .json({ error: true, message: "Internal server error" });
+  }
+};
+
+const updateExpense = async (req, res) => {
+  const { id } = req.body;
+  if (!id) {
+    return res
+      .status(400)
+      .json({ error: true, message: "Missing expense id in params" });
+  }
+
+  // Accept single object in body (no array)
+  const body = req.body || {};
+  // Normalize subCategory
+  if (body.subCategory && !body.subcategory)
+    body.subcategory = body.subCategory;
+
+  const allowed = ["category", "party", "subcategory", "amount", "payments"];
+
+  const dataToUpdate = {};
+  allowed.forEach((k) => {
+    if (
+      Object.prototype.hasOwnProperty.call(body, k) &&
+      body[k] !== undefined
+    ) {
+      if (k === "amount") dataToUpdate.amount = Number(body.amount);
+      else dataToUpdate[k] = body[k];
+    }
+  });
+
+  if (Object.keys(dataToUpdate).length === 0) {
+    return res.status(400).json({
+      error: true,
+      message:
+        "No updatable fields provided. Provide at least one field to update.",
+    });
+  }
+
+  try {
+    const updated = await prisma.expense_details.update({
+      where: { id: id },
+      data: dataToUpdate,
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Expense updated successfully",
+      data: updated,
+    });
+  } catch (error) {
+    logger.error(
+      `Internal server error: ${error.message} in updateExpense API`
+    );
+
+    if (error.code === "P2025") {
+      return res
+        .status(404)
+        .json({ error: true, message: "Expense not found" });
+    }
+    return res
+      .status(500)
+      .json({ error: true, message: "Internal server error" });
+  }
+};
+
+module.exports = {
+  viewCategory,
+  addCategory,
+  addexpense,
+  getexpenses,
+  updatepayment,
+  deleteExpense,
+  updateExpense
+};

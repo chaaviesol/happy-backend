@@ -5,6 +5,8 @@ const {
   addexpense,
   getexpenses,
   updatepayment,
+  deleteExpense,
+  updateExpense
 } = require("./expense.controller");
 
 const expenseRouter = express.Router();
@@ -14,5 +16,7 @@ expenseRouter.route("/viewcategory").get(viewCategory);
 expenseRouter.route("/addexpense").post(addexpense);
 expenseRouter.route("/getexpenses").get(getexpenses);
 expenseRouter.route("/updatepayment").post(updatepayment);
+expenseRouter.route("/deleteexpense/:id").post(deleteExpense);
+expenseRouter.route("/updateexpense").post(updateExpense);
 
 module.exports = expenseRouter;
