@@ -195,7 +195,9 @@ const addCategory = async (req, res) => {
 
 const addexpense = async (req, res) => {
   const items = req.body;
-
+  const currentDate = new Date();
+  const istOffset = 5 * 60 * 60 * 1000 + 30 * 60 * 1000;
+  const istDate = new Date(currentDate.getTime() + istOffset);
   if (!Array.isArray(items) || items.length === 0) {
     return res.status(400).json({
       error: true,
@@ -476,5 +478,5 @@ module.exports = {
   getexpenses,
   updatepayment,
   deleteExpense,
-  updateExpense
+  updateExpense,
 };
