@@ -386,7 +386,7 @@ const deleteExpense = async (req, res) => {
 
   try {
     const deleted = await prisma.expense_details.delete({
-      where: { id: id },
+      where: { id: Number(id) },
     });
 
     return res.status(200).json({
